@@ -1,0 +1,682 @@
+import { Hono } from "npm:hono";
+import { cors } from "npm:hono/cors";
+import { logger } from "npm:hono/logger";
+import { createClient } from "npm:@supabase/supabase-js";
+import * as kv from "./kv_store.tsx";
+
+const app = new Hono();
+
+const supabase = createClient(
+  Deno.env.get("SUPABASE_URL")!,
+  Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+);
+
+const PHOTO_BUCKET = "make-4f58e216-photos";
+
+// Ensure photo bucket exists on startup
+(async () => {
+  const { data: buckets } = await supabase.storage.listBuckets();
+  const bucketExists = buckets?.some((b) => b.name === PHOTO_BUCKET);
+  if (!bucketExists) {
+    await supabase.storage.createBucket(PHOTO_BUCKET);
+  }
+})();
+
+app.use("*", logger(console.log));
+
+app.use(
+  "/*",
+  cors({
+    origin: "*",
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    exposeHeaders: ["Content-Length"],
+    maxAge: 600,
+  })
+);
+
+const BASE = "/make-server-4f58e216";
+
+// ── Health ────────────────────────────────────────────────────────────────────
+app.get(`${BASE}/health`, (c) => c.json({ status: "ok" }));
+
+// ── Systems ───────────────────────────────────────────────────────────────────
+app.get(`${BASE}/systems`, async (c) => {
+  try {
+    const items = await kv.getByPrefix("sys:");
+    return c.json(items);
+  } catch (e) {
+    console.log("Error listing systems:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.get(`${BASE}/systems/:id`, async (c) => {
+  try {
+    const val = await kv.get(`sys:${c.req.param("id")}`);
+    if (!val) return c.json({ error: "System not found" }, 404);
+    return c.json(val);
+  } catch (e) {
+    console.log("Error getting system:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.post(`${BASE}/systems`, async (c) => {
+  try {
+    const body = await c.req.json();
+    const now = Date.now();
+    const system = {
+      ...body,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+      totalCycles: 0,
+    };
+    await kv.set(`sys:${system.id}`, system);
+    return c.json(system, 201);
+  } catch (e) {
+    console.log("Error creating system:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.put(`${BASE}/systems/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const existing = await kv.get(`sys:${id}`);
+    if (!existing) return c.json({ error: "System not found" }, 404);
+    const updates = await c.req.json();
+    const updated = {
+      ...existing as object,
+      ...updates,
+      id,
+      createdAt: (existing as any).createdAt,
+      updatedAt: Date.now(),
+    };
+    await kv.set(`sys:${id}`, updated);
+    return c.json(updated);
+  } catch (e) {
+    console.log("Error updating system:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.delete(`${BASE}/systems/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    // Check for dependent grow cycles
+    const cycles = await kv.getByPrefix("cyc:");
+    const hasCycles = (cycles as any[]).some((cy: any) => cy.systemId === id);
+    if (hasCycles) return c.json({ error: "Cannot delete system with existing grow cycles" }, 400);
+    await kv.del(`sys:${id}`);
+    return c.json({ ok: true });
+  } catch (e) {
+    console.log("Error deleting system:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// ── Grow Cycles ───────────────────────────────────────────────────────────────
+app.get(`${BASE}/grow-cycles`, async (c) => {
+  try {
+    const systemId = c.req.query("systemId");
+    const status = c.req.query("status");
+    let items = await kv.getByPrefix("cyc:") as any[];
+    if (systemId) items = items.filter((cy) => cy.systemId === systemId);
+    if (status) items = items.filter((cy) => cy.status === status);
+    return c.json(items);
+  } catch (e) {
+    console.log("Error listing grow cycles:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.get(`${BASE}/grow-cycles/:id`, async (c) => {
+  try {
+    const val = await kv.get(`cyc:${c.req.param("id")}`);
+    if (!val) return c.json({ error: "Grow cycle not found" }, 404);
+    return c.json(val);
+  } catch (e) {
+    console.log("Error getting grow cycle:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.post(`${BASE}/grow-cycles`, async (c) => {
+  try {
+    const body = await c.req.json();
+    const now = Date.now();
+    const cycle = {
+      ...body,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+      dailyLogCount: 0,
+      photoCount: 0,
+      issueCount: 0,
+      resolvedIssueCount: 0,
+    };
+    await kv.set(`cyc:${cycle.id}`, cycle);
+
+    // Update system: increment totalCycles, set activeCycleId
+    const sys = await kv.get(`sys:${body.systemId}`) as any;
+    if (sys) {
+      await kv.set(`sys:${body.systemId}`, {
+        ...sys,
+        totalCycles: (sys.totalCycles ?? 0) + 1,
+        activeCycleId: cycle.id,
+        updatedAt: now,
+      });
+    }
+
+    return c.json(cycle, 201);
+  } catch (e) {
+    console.log("Error creating grow cycle:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.put(`${BASE}/grow-cycles/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const existing = await kv.get(`cyc:${id}`);
+    if (!existing) return c.json({ error: "Grow cycle not found" }, 404);
+    const updates = await c.req.json();
+    const updated = {
+      ...existing as object,
+      ...updates,
+      id,
+      createdAt: (existing as any).createdAt,
+      updatedAt: Date.now(),
+    };
+    await kv.set(`cyc:${id}`, updated);
+    return c.json(updated);
+  } catch (e) {
+    console.log("Error updating grow cycle:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.delete(`${BASE}/grow-cycles/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    await kv.del(`cyc:${id}`);
+    return c.json({ ok: true });
+  } catch (e) {
+    console.log("Error deleting grow cycle:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// ── Daily Logs ────────────────────────────────────────────────────────────────
+app.get(`${BASE}/daily-logs`, async (c) => {
+  try {
+    const growCycleId = c.req.query("growCycleId");
+    const systemId = c.req.query("systemId");
+    let items = await kv.getByPrefix("log:") as any[];
+    if (growCycleId) items = items.filter((l) => l.growCycleId === growCycleId);
+    if (systemId) items = items.filter((l) => l.systemId === systemId);
+    items.sort((a, b) => b.timestamp - a.timestamp);
+    return c.json(items);
+  } catch (e) {
+    console.log("Error listing daily logs:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.get(`${BASE}/daily-logs/:id`, async (c) => {
+  try {
+    const val = await kv.get(`log:${c.req.param("id")}`);
+    if (!val) return c.json({ error: "Daily log not found" }, 404);
+    return c.json(val);
+  } catch (e) {
+    console.log("Error getting daily log:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.post(`${BASE}/daily-logs`, async (c) => {
+  try {
+    const body = await c.req.json();
+    const now = Date.now();
+    const log = {
+      ...body,
+      id: crypto.randomUUID(),
+      createdAt: now,
+    };
+    await kv.set(`log:${log.id}`, log);
+
+    // Increment dailyLogCount on cycle
+    const cycle = await kv.get(`cyc:${body.growCycleId}`) as any;
+    if (cycle) {
+      await kv.set(`cyc:${body.growCycleId}`, {
+        ...cycle,
+        dailyLogCount: (cycle.dailyLogCount ?? 0) + 1,
+        updatedAt: now,
+      });
+    }
+
+    return c.json(log, 201);
+  } catch (e) {
+    console.log("Error creating daily log:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.put(`${BASE}/daily-logs/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const existing = await kv.get(`log:${id}`);
+    if (!existing) return c.json({ error: "Daily log not found" }, 404);
+    const updates = await c.req.json();
+    const updated = {
+      ...existing as object,
+      ...updates,
+      id,
+      createdAt: (existing as any).createdAt,
+    };
+    await kv.set(`log:${id}`, updated);
+    return c.json(updated);
+  } catch (e) {
+    console.log("Error updating daily log:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.delete(`${BASE}/daily-logs/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    await kv.del(`log:${id}`);
+    return c.json({ ok: true });
+  } catch (e) {
+    console.log("Error deleting daily log:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// ── Photos ────────────────────────────────────────────────────────────────────
+app.get(`${BASE}/photos`, async (c) => {
+  try {
+    const growCycleId = c.req.query("growCycleId");
+    const systemId = c.req.query("systemId");
+    const dailyLogId = c.req.query("dailyLogId");
+    let items = await kv.getByPrefix("pho:") as any[];
+    if (growCycleId) items = items.filter((p) => p.growCycleId === growCycleId);
+    if (systemId) items = items.filter((p) => p.systemId === systemId);
+    if (dailyLogId) items = items.filter((p) => p.dailyLogId === dailyLogId);
+    items.sort((a, b) => b.timestamp - a.timestamp);
+
+    // Attach signed URLs
+    const withUrls = await Promise.all(
+      items.map(async (photo) => {
+        if (photo.storagePath) {
+          const { data } = await supabase.storage
+            .from(PHOTO_BUCKET)
+            .createSignedUrl(photo.storagePath, 3600);
+          return { ...photo, signedUrl: data?.signedUrl };
+        }
+        return photo;
+      })
+    );
+    return c.json(withUrls);
+  } catch (e) {
+    console.log("Error listing photos:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.get(`${BASE}/photos/:id`, async (c) => {
+  try {
+    const val = await kv.get(`pho:${c.req.param("id")}`) as any;
+    if (!val) return c.json({ error: "Photo not found" }, 404);
+    if (val.storagePath) {
+      const { data } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .createSignedUrl(val.storagePath, 3600);
+      return c.json({ ...val, signedUrl: data?.signedUrl });
+    }
+    return c.json(val);
+  } catch (e) {
+    console.log("Error getting photo:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.post(`${BASE}/photos`, async (c) => {
+  try {
+    const body = await c.req.json();
+    const now = Date.now();
+    const id = crypto.randomUUID();
+
+    let storagePath: string | undefined;
+    let signedUrl: string | undefined;
+
+    if (body.imageData) {
+      // Upload base64 image to Supabase Storage
+      const base64 = body.imageData.replace(/^data:[^;]+;base64,/, "");
+      const buffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
+      storagePath = `${body.growCycleId}/${id}.jpg`;
+      const { error: uploadError } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .upload(storagePath, buffer, { contentType: "image/jpeg" });
+      if (uploadError) {
+        console.log("Storage upload error:", uploadError);
+        return c.json({ error: `Storage upload error: ${uploadError.message}` }, 500);
+      }
+      const { data } = await supabase.storage
+        .from(PHOTO_BUCKET)
+        .createSignedUrl(storagePath, 3600);
+      signedUrl = data?.signedUrl;
+    }
+
+    const photo = {
+      ...body,
+      id,
+      createdAt: now,
+      imageData: undefined, // don't store base64 in KV
+      storagePath,
+    };
+    await kv.set(`pho:${id}`, photo);
+
+    // Increment photoCount on cycle
+    const cycle = await kv.get(`cyc:${body.growCycleId}`) as any;
+    if (cycle) {
+      await kv.set(`cyc:${body.growCycleId}`, {
+        ...cycle,
+        photoCount: (cycle.photoCount ?? 0) + 1,
+        updatedAt: now,
+      });
+    }
+
+    return c.json({ ...photo, signedUrl }, 201);
+  } catch (e) {
+    console.log("Error creating photo:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.delete(`${BASE}/photos/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const photo = await kv.get(`pho:${id}`) as any;
+    if (!photo) return c.json({ error: "Photo not found" }, 404);
+    if (photo.storagePath) {
+      await supabase.storage.from(PHOTO_BUCKET).remove([photo.storagePath]);
+    }
+    await kv.del(`pho:${id}`);
+    return c.json({ ok: true });
+  } catch (e) {
+    console.log("Error deleting photo:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// ── Auth / User Profiles ──────────────────────────────────────────────────────
+
+async function getAuthUser(req: Request): Promise<{ id: string; email?: string } | null> {
+  const token = req.headers.get("Authorization")?.split(" ")[1];
+  if (!token) return null;
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  return user as { id: string; email?: string };
+}
+
+// Get current user profile
+app.get(`${BASE}/auth/me`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const profile = await kv.get(`usr:${user.id}`);
+    return c.json(profile ?? null);
+  } catch (e) {
+    console.log("Error getting profile:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// Create or update user profile
+app.post(`${BASE}/auth/profile`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const body = await c.req.json();
+    const now = Date.now();
+    const existing = await kv.get(`usr:${user.id}`) as any;
+    const profile = {
+      id: user.id,
+      email: user.email,
+      name: body.name ?? existing?.name ?? "",
+      role: existing?.role ?? body.role ?? "admin",
+      farmId: existing?.farmId ?? body.farmId ?? null,
+      createdAt: existing?.createdAt ?? now,
+      updatedAt: now,
+    };
+    await kv.set(`usr:${user.id}`, profile);
+    return c.json(profile);
+  } catch (e) {
+    console.log("Error saving profile:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// ── Farms ─────────────────────────────────────────────────────────────────────
+
+// Create farm
+app.post(`${BASE}/farms`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const body = await c.req.json();
+    const now = Date.now();
+    const farm = {
+      id: crypto.randomUUID(),
+      name: body.name,
+      adminId: user.id,
+      members: [{ userId: user.id, role: "admin" }],
+      createdAt: now,
+      updatedAt: now,
+    };
+    await kv.set(`frm:${farm.id}`, farm);
+    // Update user profile with farmId + admin role
+    const profile = await kv.get(`usr:${user.id}`) as any;
+    if (profile) {
+      await kv.set(`usr:${user.id}`, { ...profile, farmId: farm.id, role: "admin", updatedAt: now });
+    }
+    return c.json(farm, 201);
+  } catch (e) {
+    console.log("Error creating farm:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// Get farm
+app.get(`${BASE}/farms/:id`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const farm = await kv.get(`frm:${c.req.param("id")}`);
+    if (!farm) return c.json({ error: "Farm not found" }, 404);
+    return c.json(farm);
+  } catch (e) {
+    console.log("Error getting farm:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// List farm members (with profile data)
+app.get(`${BASE}/farms/:id/members`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const farm = await kv.get(`frm:${c.req.param("id")}`) as any;
+    if (!farm) return c.json({ error: "Farm not found" }, 404);
+    const members = await Promise.all(
+      (farm.members ?? []).map(async (m: any) => {
+        const profile = await kv.get(`usr:${m.userId}`);
+        return { ...m, profile };
+      })
+    );
+    return c.json(members);
+  } catch (e) {
+    console.log("Error listing members:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// Invite a collaborator — sends magic link via Supabase
+app.post(`${BASE}/farms/:id/invite`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const farmId = c.req.param("id");
+    const farm = await kv.get(`frm:${farmId}`) as any;
+    if (!farm) return c.json({ error: "Farm not found" }, 404);
+    if (farm.adminId !== user.id) return c.json({ error: "Only admin can invite" }, 403);
+    const { email, role = "collaborator" } = await c.req.json();
+    if (!email) return c.json({ error: "Email required" }, 400);
+    const now = Date.now();
+    const token = crypto.randomUUID();
+    const invite = { token, farmId, farmName: farm.name, invitedBy: user.id, email, role, createdAt: now, expiresAt: now + 7 * 24 * 60 * 60 * 1000 };
+    await kv.set(`inv:${token}`, invite);
+    // Send magic link via Supabase (invite user — creates account if needed)
+    const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+      data: { inviteToken: token, farmId, role },
+    });
+    if (error) {
+      console.log("Supabase invite error:", error);
+      return c.json({ error: `Invite email error: ${error.message}` }, 500);
+    }
+    return c.json({ ok: true, token });
+  } catch (e) {
+    console.log("Error inviting member:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// Remove a member
+app.delete(`${BASE}/farms/:id/members/:userId`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const farmId = c.req.param("id");
+    const targetUserId = c.req.param("userId");
+    const farm = await kv.get(`frm:${farmId}`) as any;
+    if (!farm) return c.json({ error: "Farm not found" }, 404);
+    if (farm.adminId !== user.id) return c.json({ error: "Only admin can remove members" }, 403);
+    if (targetUserId === user.id) return c.json({ error: "Cannot remove yourself" }, 400);
+    const now = Date.now();
+    const updated = { ...farm, members: farm.members.filter((m: any) => m.userId !== targetUserId), updatedAt: now };
+    await kv.set(`frm:${farmId}`, updated);
+    // Clear farmId from removed user's profile
+    const profile = await kv.get(`usr:${targetUserId}`) as any;
+    if (profile) await kv.set(`usr:${targetUserId}`, { ...profile, farmId: null, updatedAt: now });
+    return c.json({ ok: true });
+  } catch (e) {
+    console.log("Error removing member:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// Accept invite (called after magic link login with inviteToken in user metadata)
+app.post(`${BASE}/auth/accept-invite`, async (c) => {
+  try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const { token } = await c.req.json();
+    const invite = await kv.get(`inv:${token}`) as any;
+    if (!invite) return c.json({ error: "Invite not found or expired" }, 404);
+    if (invite.expiresAt < Date.now()) return c.json({ error: "Invite expired" }, 410);
+    const now = Date.now();
+    const farm = await kv.get(`frm:${invite.farmId}`) as any;
+    if (!farm) return c.json({ error: "Farm not found" }, 404);
+    // Add member if not already present
+    const alreadyMember = farm.members.some((m: any) => m.userId === user.id);
+    if (!alreadyMember) {
+      farm.members.push({ userId: user.id, role: invite.role });
+      await kv.set(`frm:${invite.farmId}`, { ...farm, updatedAt: now });
+    }
+    // Update user profile
+    const profile = await kv.get(`usr:${user.id}`) as any ?? {};
+    await kv.set(`usr:${user.id}`, { ...profile, id: user.id, farmId: invite.farmId, role: invite.role, updatedAt: now });
+    await kv.del(`inv:${token}`);
+    return c.json({ ok: true, farmId: invite.farmId, role: invite.role });
+  } catch (e) {
+    console.log("Error accepting invite:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+// ── Financial Plans ───────────────────────────────────────────────────────────
+app.get(`${BASE}/financial-plans`, async (c) => {
+  try {
+    const items = await kv.getByPrefix("pln:");
+    return c.json(items);
+  } catch (e) {
+    console.log("Error listing financial plans:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.get(`${BASE}/financial-plans/:id`, async (c) => {
+  try {
+    const val = await kv.get(`pln:${c.req.param("id")}`);
+    if (!val) return c.json({ error: "Financial plan not found" }, 404);
+    return c.json(val);
+  } catch (e) {
+    console.log("Error getting financial plan:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.post(`${BASE}/financial-plans`, async (c) => {
+  try {
+    const body = await c.req.json();
+    const now = Date.now();
+    const plan = {
+      ...body,
+      id: crypto.randomUUID(),
+      createdAt: now,
+      updatedAt: now,
+    };
+    await kv.set(`pln:${plan.id}`, plan);
+    return c.json(plan, 201);
+  } catch (e) {
+    console.log("Error creating financial plan:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.put(`${BASE}/financial-plans/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    const existing = await kv.get(`pln:${id}`);
+    if (!existing) return c.json({ error: "Financial plan not found" }, 404);
+    const updates = await c.req.json();
+    const updated = {
+      ...existing as object,
+      ...updates,
+      id,
+      createdAt: (existing as any).createdAt,
+      updatedAt: Date.now(),
+    };
+    await kv.set(`pln:${id}`, updated);
+    return c.json(updated);
+  } catch (e) {
+    console.log("Error updating financial plan:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+app.delete(`${BASE}/financial-plans/:id`, async (c) => {
+  try {
+    const id = c.req.param("id");
+    await kv.del(`pln:${id}`);
+    return c.json({ ok: true });
+  } catch (e) {
+    console.log("Error deleting financial plan:", e);
+    return c.json({ error: String(e) }, 500);
+  }
+});
+
+Deno.serve(app.fetch);

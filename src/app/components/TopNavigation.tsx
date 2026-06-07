@@ -1,6 +1,7 @@
-import { Leaf, Settings, LayoutGrid, BookOpen, Info } from 'lucide-react';
+import { Leaf, LayoutGrid, BookOpen, Info } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { LanguageToggle } from './LanguageToggle';
+import { UserMenu } from './UserMenu';
 
 interface TopNavigationProps {
   mode: 'planning' | 'operations' | 'about' | 'learn';
@@ -52,12 +53,10 @@ export function TopNavigation({ mode, onModeChange }: TopNavigationProps) {
               <button onClick={() => onModeChange('about')} className={`sm:hidden p-2 rounded-md transition-all ${mode === 'about' ? 'text-white' : 'text-white/40 hover:text-white/60'}`} aria-label="About"><Info className="w-3.5 h-3.5" /></button>
             </div>
 
-            {/* Language + Settings */}
-            <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            {/* Language + User */}
+            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
               <LanguageToggle />
-              <button className="text-white/60 hover:text-white transition-colors p-1">
-                <Settings className="w-4 h-4 sm:w-5 sm:h-5" />
-              </button>
+              <UserMenu />
             </div>
 
           </div>

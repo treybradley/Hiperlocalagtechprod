@@ -4,6 +4,9 @@ import {
   useLanguage,
 } from "./contexts/LanguageContext";
 import { FarmConfigProvider } from "./contexts/FarmConfigContext";
+import { AuthProvider, useAuth } from "./contexts/AuthContext";
+import { AuthGate } from "./components/AuthGate";
+import { OnboardingFlow } from "./components/OnboardingFlow";
 import { HeroSection } from "./components/HeroSection";
 import { ConfiguratorSection } from "./components/ConfiguratorSection";
 import { FinancialCalculatorSection } from "./components/FinancialCalculatorSection";
@@ -42,7 +45,9 @@ function AppContent() {
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  // Initialize IndexedDB on mount
+  const { session, profile, farm, loading: authLoading } = useAuth();
+
+  // Initialize IndexedDB on mount (kept for any legacy reads)
   useEffect(() => {
     initDB().catch(console.error);
   }, []);
@@ -153,6 +158,17 @@ function AppContent() {
   }, [currentSection, isScrolling, mode]);
 
   const CurrentComponent = sections[currentSection].component;
+
+  // Auth gates
+  if (authLoading) {
+    return (
+      <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center">
+        <div className="w-6 h-6 border-2 border-green-500/30 border-t-green-500 rounded-full animate-spin" />
+      </div>
+    );
+  }
+  if (!session) return <AuthGate />;
+  if (!profile?.name || !farm) return <OnboardingFlow />;
 
   return (
     <div className="dark">
@@ -301,9 +317,11 @@ function AppContent() {
 export default function App() {
   return (
     <LanguageProvider>
-      <FarmConfigProvider>
-        <AppContent />
-      </FarmConfigProvider>
+      <AuthProvider>
+        <FarmConfigProvider>
+          <AppContent />
+        </FarmConfigProvider>
+      </AuthProvider>
     </LanguageProvider>
   );
 }

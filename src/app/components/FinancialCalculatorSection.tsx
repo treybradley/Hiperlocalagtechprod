@@ -1,7 +1,8 @@
 import { useState, useMemo } from 'react';
-import { DollarSign, Package, Leaf, ChevronDown, ChevronUp } from 'lucide-react';
+import { DollarSign, Package, Leaf, ChevronDown, ChevronUp, Save, Check, Loader } from 'lucide-react';
 import { useFarmConfig, getTotalPlantsByCrop } from '../contexts/FarmConfigContext';
 import { CROPS, CROP_MAP, CROP_CATEGORY_STYLES, SYSTEM_TYPE_LABELS } from '../data/crops';
+import { saveFinancialPlan } from '../../storage/operations/financialPlans';
 
 interface FinancialCalculatorSectionProps {
   isActive: boolean;
@@ -49,6 +50,8 @@ export function FinancialCalculatorSection({ isActive }: FinancialCalculatorSect
   const [labor, setLabor]               = useState(8000);
   const [otherMonthly, setOtherMonthly] = useState(1000);
   const [showResults, setShowResults]   = useState(false);
+  const [saveState, setSaveState]       = useState<'idle' | 'naming' | 'saving' | 'saved'>('idle');
+  const [planName, setPlanName]         = useState('');
 
   // Derive total plants per crop from all system blocks
   const totalPlantsByCrop = useMemo(
@@ -95,6 +98,19 @@ export function FinancialCalculatorSection({ isActive }: FinancialCalculatorSect
     };
   }, [systemCost, installCost, electricity, water, nutrients, labor, otherMonthly,
       config.cropParams, activeCropIds, totalPlantsByCrop]);
+
+  async function doSave() {
+    if (!planName.trim()) return;
+    setSaveState('saving');
+    try {
+      await saveFinancialPlan(planName.trim(), config, calc);
+      setSaveState('saved');
+      setTimeout(() => setSaveState('idle'), 3000);
+    } catch (e) {
+      console.log('Error saving financial plan:', e);
+      setSaveState('idle');
+    }
+  }
 
   const profitColor = calc.monthlyProfit >= 0 ? 'text-green-400' : 'text-red-400';
   const profitBg    = calc.monthlyProfit >= 0
@@ -264,6 +280,55 @@ export function FinancialCalculatorSection({ isActive }: FinancialCalculatorSect
                 </div>
               </div>
             )}
+
+            {/* Save Plan */}
+            <div className="pb-2">
+              {saveState === 'idle' && (
+                <button
+                  onClick={() => { setPlanName('My Farm Plan'); setSaveState('naming'); }}
+                  className="flex items-center gap-2 px-4 py-2.5 bg-green-500/15 border border-green-500/30 text-green-400 rounded-full text-sm hover:bg-green-500/25 transition-all"
+                >
+                  <Save className="w-4 h-4" />
+                  Save this plan
+                </button>
+              )}
+
+              {saveState === 'naming' && (
+                <div className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    value={planName}
+                    onChange={e => setPlanName(e.target.value)}
+                    onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter') doSave(); }}
+                    placeholder="Plan name…"
+                    className="flex-1 bg-white/5 border border-white/15 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                    autoFocus
+                  />
+                  <button
+                    onClick={doSave}
+                    disabled={!planName.trim()}
+                    className="px-4 py-2 bg-green-500/20 border border-green-500/40 text-green-400 rounded-lg text-sm hover:bg-green-500/30 disabled:opacity-40 transition-all"
+                  >
+                    Save
+                  </button>
+                  <button onClick={() => setSaveState('idle')} className="text-white/30 hover:text-white/60 text-xs px-2">cancel</button>
+                </div>
+              )}
+
+              {saveState === 'saving' && (
+                <div className="flex items-center gap-2 text-white/40 text-sm">
+                  <Loader className="w-4 h-4 animate-spin" />
+                  Saving plan…
+                </div>
+              )}
+
+              {saveState === 'saved' && (
+                <div className="flex items-center gap-2 text-green-400 text-sm">
+                  <Check className="w-4 h-4" />
+                  Plan saved!
+                </div>
+              )}
+            </div>
           </div>
 
           {/* RIGHT: Results (desktop) */}

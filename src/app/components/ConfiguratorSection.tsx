@@ -37,7 +37,7 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
   const { config, updateConfig, addSystemBlock, removeSystemBlock, updateSystemBlock, toggleCropInBlock, updateCropInBlock } = useFarmConfig();
 
   return (
-    <div className="relative w-full h-full overflow-hidden bg-[ px-[0px] pt-[60px] pb-[0px]#0a0a0a]">
+    <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
       <div className="absolute inset-0 opacity-30">
         <ImageWithFallback
           src="https://images.unsplash.com/photo-1774291981971-ec2ec7a8cd0e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=1920"
