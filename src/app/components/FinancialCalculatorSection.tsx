@@ -1,8 +1,41 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { DollarSign, Package, Leaf, ChevronDown, ChevronUp, Save, Check, Loader } from 'lucide-react';
 import { useFarmConfig, getTotalPlantsByCrop } from '../contexts/FarmConfigContext';
+import { useAuth } from '../contexts/AuthContext';
 import { CROPS, CROP_MAP, CROP_CATEGORY_STYLES, SYSTEM_TYPE_LABELS } from '../data/crops';
 import { saveFinancialPlan } from '../../storage/operations/financialPlans';
+
+const FINANCIAL_DRAFT_KEY = 'hiperlocal-financial-draft';
+
+interface FinancialDraft {
+  systemCost: number;
+  installCost: number;
+  electricity: number;
+  water: number;
+  nutrients: number;
+  labor: number;
+  otherMonthly: number;
+}
+
+const DEFAULT_FINANCIAL: FinancialDraft = {
+  systemCost: 45000,
+  installCost: 8000,
+  electricity: 3200,
+  water: 400,
+  nutrients: 1800,
+  labor: 8000,
+  otherMonthly: 1000,
+};
+
+function loadFinancialDraft(): FinancialDraft {
+  try {
+    const raw = localStorage.getItem(FINANCIAL_DRAFT_KEY);
+    if (!raw) return DEFAULT_FINANCIAL;
+    return { ...DEFAULT_FINANCIAL, ...JSON.parse(raw) };
+  } catch {
+    return DEFAULT_FINANCIAL;
+  }
+}
 
 interface FinancialCalculatorSectionProps {
   isActive: boolean;
@@ -41,17 +74,24 @@ function InputRow({ label, value, onChange, step = 100, prefix = '$', suffix = '
 
 export function FinancialCalculatorSection({ isActive }: FinancialCalculatorSectionProps) {
   const { config, updateCropParam } = useFarmConfig();
+  const { session, openAuthModal } = useAuth();
+  const draft = loadFinancialDraft();
 
-  const [systemCost, setSystemCost]     = useState(45000);
-  const [installCost, setInstallCost]   = useState(8000);
-  const [electricity, setElectricity]   = useState(3200);
-  const [water, setWater]               = useState(400);
-  const [nutrients, setNutrients]       = useState(1800);
-  const [labor, setLabor]               = useState(8000);
-  const [otherMonthly, setOtherMonthly] = useState(1000);
+  const [systemCost, setSystemCost]     = useState(draft.systemCost);
+  const [installCost, setInstallCost]   = useState(draft.installCost);
+  const [electricity, setElectricity]   = useState(draft.electricity);
+  const [water, setWater]               = useState(draft.water);
+  const [nutrients, setNutrients]       = useState(draft.nutrients);
+  const [labor, setLabor]               = useState(draft.labor);
+  const [otherMonthly, setOtherMonthly] = useState(draft.otherMonthly);
   const [showResults, setShowResults]   = useState(false);
   const [saveState, setSaveState]       = useState<'idle' | 'naming' | 'saving' | 'saved'>('idle');
   const [planName, setPlanName]         = useState('');
+
+  useEffect(() => {
+    const data: FinancialDraft = { systemCost, installCost, electricity, water, nutrients, labor, otherMonthly };
+    localStorage.setItem(FINANCIAL_DRAFT_KEY, JSON.stringify(data));
+  }, [systemCost, installCost, electricity, water, nutrients, labor, otherMonthly]);
 
   // Derive total plants per crop from all system blocks
   const totalPlantsByCrop = useMemo(
@@ -101,6 +141,10 @@ export function FinancialCalculatorSection({ isActive }: FinancialCalculatorSect
 
   async function doSave() {
     if (!planName.trim()) return;
+    if (!session) {
+      openAuthModal(() => doSave());
+      return;
+    }
     setSaveState('saving');
     try {
       await saveFinancialPlan(planName.trim(), config, calc);
@@ -108,8 +152,20 @@ export function FinancialCalculatorSection({ isActive }: FinancialCalculatorSect
       setTimeout(() => setSaveState('idle'), 3000);
     } catch (e) {
       console.log('Error saving financial plan:', e);
-      setSaveState('idle');
+      setSaveState('naming');
     }
+  }
+
+  function handleStartSave() {
+    if (!session) {
+      openAuthModal(() => {
+        setPlanName('My Farm Plan');
+        setSaveState('naming');
+      });
+      return;
+    }
+    setPlanName('My Farm Plan');
+    setSaveState('naming');
   }
 
   const profitColor = calc.monthlyProfit >= 0 ? 'text-green-400' : 'text-red-400';
@@ -285,7 +341,7 @@ export function FinancialCalculatorSection({ isActive }: FinancialCalculatorSect
             <div className="pb-2">
               {saveState === 'idle' && (
                 <button
-                  onClick={() => { setPlanName('My Farm Plan'); setSaveState('naming'); }}
+                  onClick={handleStartSave}
                   className="flex items-center gap-2 px-4 py-2.5 bg-green-500/15 border border-green-500/30 text-green-400 rounded-full text-sm hover:bg-green-500/25 transition-all"
                 >
                   <Save className="w-4 h-4" />

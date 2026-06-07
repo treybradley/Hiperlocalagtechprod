@@ -1,5 +1,5 @@
 import { Photo } from '../models';
-import { apiFetch } from '../api';
+import { apiFetchAuth } from '../api';
 
 export async function createPhoto(
   photo: Omit<Photo, 'id' | 'createdAt' | 'thumbnail' | 'fileSize' | 'dimensions'>,
@@ -10,7 +10,7 @@ export async function createPhoto(
     reader.onload = async () => {
       try {
         const base64 = reader.result as string;
-        const result = await apiFetch<Photo>('/photos', {
+        const result = await apiFetchAuth<Photo>('/photos', {
           method: 'POST',
           body: JSON.stringify({ ...photo, imageData: base64 }),
         });
@@ -27,7 +27,7 @@ export async function createPhoto(
 export async function createPhotoFromBase64(
   photo: Omit<Photo, 'id' | 'createdAt'>
 ): Promise<Photo> {
-  return apiFetch<Photo>('/photos', {
+  return apiFetchAuth<Photo>('/photos', {
     method: 'POST',
     body: JSON.stringify(photo),
   });
@@ -35,33 +35,33 @@ export async function createPhotoFromBase64(
 
 export async function getPhoto(id: string): Promise<Photo | undefined> {
   try {
-    return await apiFetch<Photo>(`/photos/${id}`);
+    return await apiFetchAuth<Photo>(`/photos/${id}`);
   } catch {
     return undefined;
   }
 }
 
 export async function getPhotosByGrowCycle(growCycleId: string): Promise<Photo[]> {
-  return apiFetch<Photo[]>(`/photos?growCycleId=${encodeURIComponent(growCycleId)}`);
+  return apiFetchAuth<Photo[]>(`/photos?growCycleId=${encodeURIComponent(growCycleId)}`);
 }
 
 export async function getPhotosBySystem(systemId: string): Promise<Photo[]> {
-  return apiFetch<Photo[]>(`/photos?systemId=${encodeURIComponent(systemId)}`);
+  return apiFetchAuth<Photo[]>(`/photos?systemId=${encodeURIComponent(systemId)}`);
 }
 
 export async function getPhotosByDailyLog(dailyLogId: string): Promise<Photo[]> {
-  return apiFetch<Photo[]>(`/photos?dailyLogId=${encodeURIComponent(dailyLogId)}`);
+  return apiFetchAuth<Photo[]>(`/photos?dailyLogId=${encodeURIComponent(dailyLogId)}`);
 }
 
 export async function deletePhoto(id: string): Promise<void> {
-  await apiFetch<{ ok: boolean }>(`/photos/${id}`, { method: 'DELETE' });
+  await apiFetchAuth<{ ok: boolean }>(`/photos/${id}`, { method: 'DELETE' });
 }
 
 export async function updatePhoto(
   id: string,
   updates: Partial<Photo>
 ): Promise<void> {
-  await apiFetch<Photo>(`/photos/${id}`, {
+  await apiFetchAuth<Photo>(`/photos/${id}`, {
     method: 'PUT',
     body: JSON.stringify(updates),
   });

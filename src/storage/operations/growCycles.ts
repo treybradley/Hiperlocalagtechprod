@@ -1,10 +1,11 @@
 import { GrowCycle } from '../models';
-import { apiFetch } from '../api';
+import { apiFetchAuth } from '../api';
+import { getSystem, updateSystem } from './systems';
 
 export async function createGrowCycle(
   cycle: Omit<GrowCycle, 'id' | 'createdAt' | 'updatedAt' | 'dailyLogCount' | 'photoCount' | 'issueCount' | 'resolvedIssueCount'>
 ): Promise<GrowCycle> {
-  return apiFetch<GrowCycle>('/grow-cycles', {
+  return apiFetchAuth<GrowCycle>('/grow-cycles', {
     method: 'POST',
     body: JSON.stringify(cycle),
   });
@@ -12,29 +13,29 @@ export async function createGrowCycle(
 
 export async function getGrowCycle(id: string): Promise<GrowCycle | undefined> {
   try {
-    return await apiFetch<GrowCycle>(`/grow-cycles/${id}`);
+    return await apiFetchAuth<GrowCycle>(`/grow-cycles/${id}`);
   } catch {
     return undefined;
   }
 }
 
 export async function getAllGrowCycles(): Promise<GrowCycle[]> {
-  return apiFetch<GrowCycle[]>('/grow-cycles');
+  return apiFetchAuth<GrowCycle[]>('/grow-cycles');
 }
 
 export async function getGrowCyclesBySystem(systemId: string): Promise<GrowCycle[]> {
-  return apiFetch<GrowCycle[]>(`/grow-cycles?systemId=${encodeURIComponent(systemId)}`);
+  return apiFetchAuth<GrowCycle[]>(`/grow-cycles?systemId=${encodeURIComponent(systemId)}`);
 }
 
 export async function getActiveGrowCycles(): Promise<GrowCycle[]> {
-  return apiFetch<GrowCycle[]>('/grow-cycles?status=active');
+  return apiFetchAuth<GrowCycle[]>('/grow-cycles?status=active');
 }
 
 export async function updateGrowCycle(
   id: string,
   updates: Partial<GrowCycle>
 ): Promise<void> {
-  await apiFetch<GrowCycle>(`/grow-cycles/${id}`, {
+  await apiFetchAuth<GrowCycle>(`/grow-cycles/${id}`, {
     method: 'PUT',
     body: JSON.stringify(updates),
   });
@@ -87,14 +88,9 @@ export async function completeGrowCycle(
     cycleResults: results,
   });
 
-  // Clear active cycle from system — import inline to avoid circular dep
-  const { apiFetch: api } = await import('../api');
-  const sys = await api<any>(`/systems/${cycle.systemId}`).catch(() => null);
+  const sys = await getSystem(cycle.systemId);
   if (sys) {
-    await api(`/systems/${cycle.systemId}`, {
-      method: 'PUT',
-      body: JSON.stringify({ activeCycleId: undefined }),
-    });
+    await updateSystem(cycle.systemId, { activeCycleId: undefined });
   }
 }
 

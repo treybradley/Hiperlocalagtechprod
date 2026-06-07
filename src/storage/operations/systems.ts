@@ -1,10 +1,10 @@
 import { HydroponicSystem } from '../models';
-import { apiFetch } from '../api';
+import { apiFetchAuth } from '../api';
 
 export async function createSystem(
   system: Omit<HydroponicSystem, 'id' | 'createdAt' | 'updatedAt' | 'totalCycles'>
 ): Promise<HydroponicSystem> {
-  return apiFetch<HydroponicSystem>('/systems', {
+  return apiFetchAuth<HydroponicSystem>('/systems', {
     method: 'POST',
     body: JSON.stringify(system),
   });
@@ -12,14 +12,14 @@ export async function createSystem(
 
 export async function getSystem(id: string): Promise<HydroponicSystem | undefined> {
   try {
-    return await apiFetch<HydroponicSystem>(`/systems/${id}`);
+    return await apiFetchAuth<HydroponicSystem>(`/systems/${id}`);
   } catch {
     return undefined;
   }
 }
 
 export async function getAllSystems(): Promise<HydroponicSystem[]> {
-  return apiFetch<HydroponicSystem[]>('/systems');
+  return apiFetchAuth<HydroponicSystem[]>('/systems');
 }
 
 export async function getSystemsByStatus(status: string): Promise<HydroponicSystem[]> {
@@ -31,14 +31,14 @@ export async function updateSystem(
   id: string,
   updates: Partial<HydroponicSystem>
 ): Promise<void> {
-  await apiFetch<HydroponicSystem>(`/systems/${id}`, {
+  await apiFetchAuth<HydroponicSystem>(`/systems/${id}`, {
     method: 'PUT',
     body: JSON.stringify(updates),
   });
 }
 
 export async function deleteSystem(id: string): Promise<void> {
-  await apiFetch<{ ok: boolean }>(`/systems/${id}`, { method: 'DELETE' });
+  await apiFetchAuth<{ ok: boolean }>(`/systems/${id}`, { method: 'DELETE' });
 }
 
 export async function incrementSystemCycles(systemId: string): Promise<void> {

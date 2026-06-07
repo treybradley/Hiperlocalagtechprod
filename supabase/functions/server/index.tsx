@@ -37,13 +37,32 @@ app.use(
 
 const BASE = "/make-server-4f58e216";
 
+async function getAuthUser(req: Request): Promise<{ id: string; email?: string } | null> {
+  const authHeader = req.headers.get("Authorization");
+  if (!authHeader?.startsWith("Bearer ")) return null;
+  const token = authHeader.slice(7);
+  const { data: { user }, error } = await supabase.auth.getUser(token);
+  if (error || !user) return null;
+  return user as { id: string; email?: string };
+}
+
+function ownedBy(record: any, userId: string): boolean {
+  return record?.userId === userId;
+}
+
+function filterByUser(items: any[], userId: string): any[] {
+  return items.filter((item) => ownedBy(item, userId));
+}
+
 // ── Health ────────────────────────────────────────────────────────────────────
 app.get(`${BASE}/health`, (c) => c.json({ status: "ok" }));
 
 // ── Systems ───────────────────────────────────────────────────────────────────
 app.get(`${BASE}/systems`, async (c) => {
   try {
-    const items = await kv.getByPrefix("sys:");
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const items = filterByUser(await kv.getByPrefix("sys:"), user.id);
     return c.json(items);
   } catch (e) {
     console.log("Error listing systems:", e);
@@ -53,8 +72,10 @@ app.get(`${BASE}/systems`, async (c) => {
 
 app.get(`${BASE}/systems/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const val = await kv.get(`sys:${c.req.param("id")}`);
-    if (!val) return c.json({ error: "System not found" }, 404);
+    if (!val || !ownedBy(val, user.id)) return c.json({ error: "System not found" }, 404);
     return c.json(val);
   } catch (e) {
     console.log("Error getting system:", e);
@@ -64,10 +85,13 @@ app.get(`${BASE}/systems/:id`, async (c) => {
 
 app.post(`${BASE}/systems`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const body = await c.req.json();
     const now = Date.now();
     const system = {
       ...body,
+      userId: user.id,
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
@@ -83,13 +107,16 @@ app.post(`${BASE}/systems`, async (c) => {
 
 app.put(`${BASE}/systems/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
     const existing = await kv.get(`sys:${id}`);
-    if (!existing) return c.json({ error: "System not found" }, 404);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "System not found" }, 404);
     const updates = await c.req.json();
     const updated = {
       ...existing as object,
       ...updates,
+      userId: user.id,
       id,
       createdAt: (existing as any).createdAt,
       updatedAt: Date.now(),
@@ -104,10 +131,13 @@ app.put(`${BASE}/systems/:id`, async (c) => {
 
 app.delete(`${BASE}/systems/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
-    // Check for dependent grow cycles
-    const cycles = await kv.getByPrefix("cyc:");
-    const hasCycles = (cycles as any[]).some((cy: any) => cy.systemId === id);
+    const existing = await kv.get(`sys:${id}`);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "System not found" }, 404);
+    const cycles = filterByUser(await kv.getByPrefix("cyc:") as any[], user.id);
+    const hasCycles = cycles.some((cy: any) => cy.systemId === id);
     if (hasCycles) return c.json({ error: "Cannot delete system with existing grow cycles" }, 400);
     await kv.del(`sys:${id}`);
     return c.json({ ok: true });
@@ -120,9 +150,11 @@ app.delete(`${BASE}/systems/:id`, async (c) => {
 // ── Grow Cycles ───────────────────────────────────────────────────────────────
 app.get(`${BASE}/grow-cycles`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const systemId = c.req.query("systemId");
     const status = c.req.query("status");
-    let items = await kv.getByPrefix("cyc:") as any[];
+    let items = filterByUser(await kv.getByPrefix("cyc:") as any[], user.id);
     if (systemId) items = items.filter((cy) => cy.systemId === systemId);
     if (status) items = items.filter((cy) => cy.status === status);
     return c.json(items);
@@ -134,8 +166,10 @@ app.get(`${BASE}/grow-cycles`, async (c) => {
 
 app.get(`${BASE}/grow-cycles/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const val = await kv.get(`cyc:${c.req.param("id")}`);
-    if (!val) return c.json({ error: "Grow cycle not found" }, 404);
+    if (!val || !ownedBy(val, user.id)) return c.json({ error: "Grow cycle not found" }, 404);
     return c.json(val);
   } catch (e) {
     console.log("Error getting grow cycle:", e);
@@ -145,10 +179,15 @@ app.get(`${BASE}/grow-cycles/:id`, async (c) => {
 
 app.post(`${BASE}/grow-cycles`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const body = await c.req.json();
+    const sys = await kv.get(`sys:${body.systemId}`) as any;
+    if (!sys || !ownedBy(sys, user.id)) return c.json({ error: "System not found" }, 404);
     const now = Date.now();
     const cycle = {
       ...body,
+      userId: user.id,
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
@@ -159,16 +198,12 @@ app.post(`${BASE}/grow-cycles`, async (c) => {
     };
     await kv.set(`cyc:${cycle.id}`, cycle);
 
-    // Update system: increment totalCycles, set activeCycleId
-    const sys = await kv.get(`sys:${body.systemId}`) as any;
-    if (sys) {
-      await kv.set(`sys:${body.systemId}`, {
-        ...sys,
-        totalCycles: (sys.totalCycles ?? 0) + 1,
-        activeCycleId: cycle.id,
-        updatedAt: now,
-      });
-    }
+    await kv.set(`sys:${body.systemId}`, {
+      ...sys,
+      totalCycles: (sys.totalCycles ?? 0) + 1,
+      activeCycleId: cycle.id,
+      updatedAt: now,
+    });
 
     return c.json(cycle, 201);
   } catch (e) {
@@ -179,13 +214,16 @@ app.post(`${BASE}/grow-cycles`, async (c) => {
 
 app.put(`${BASE}/grow-cycles/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
     const existing = await kv.get(`cyc:${id}`);
-    if (!existing) return c.json({ error: "Grow cycle not found" }, 404);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Grow cycle not found" }, 404);
     const updates = await c.req.json();
     const updated = {
       ...existing as object,
       ...updates,
+      userId: user.id,
       id,
       createdAt: (existing as any).createdAt,
       updatedAt: Date.now(),
@@ -200,7 +238,11 @@ app.put(`${BASE}/grow-cycles/:id`, async (c) => {
 
 app.delete(`${BASE}/grow-cycles/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
+    const existing = await kv.get(`cyc:${id}`);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Grow cycle not found" }, 404);
     await kv.del(`cyc:${id}`);
     return c.json({ ok: true });
   } catch (e) {
@@ -212,9 +254,11 @@ app.delete(`${BASE}/grow-cycles/:id`, async (c) => {
 // ── Daily Logs ────────────────────────────────────────────────────────────────
 app.get(`${BASE}/daily-logs`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const growCycleId = c.req.query("growCycleId");
     const systemId = c.req.query("systemId");
-    let items = await kv.getByPrefix("log:") as any[];
+    let items = filterByUser(await kv.getByPrefix("log:") as any[], user.id);
     if (growCycleId) items = items.filter((l) => l.growCycleId === growCycleId);
     if (systemId) items = items.filter((l) => l.systemId === systemId);
     items.sort((a, b) => b.timestamp - a.timestamp);
@@ -227,8 +271,10 @@ app.get(`${BASE}/daily-logs`, async (c) => {
 
 app.get(`${BASE}/daily-logs/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const val = await kv.get(`log:${c.req.param("id")}`);
-    if (!val) return c.json({ error: "Daily log not found" }, 404);
+    if (!val || !ownedBy(val, user.id)) return c.json({ error: "Daily log not found" }, 404);
     return c.json(val);
   } catch (e) {
     console.log("Error getting daily log:", e);
@@ -238,24 +284,25 @@ app.get(`${BASE}/daily-logs/:id`, async (c) => {
 
 app.post(`${BASE}/daily-logs`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const body = await c.req.json();
+    const cycle = await kv.get(`cyc:${body.growCycleId}`) as any;
+    if (!cycle || !ownedBy(cycle, user.id)) return c.json({ error: "Grow cycle not found" }, 404);
     const now = Date.now();
     const log = {
       ...body,
+      userId: user.id,
       id: crypto.randomUUID(),
       createdAt: now,
     };
     await kv.set(`log:${log.id}`, log);
 
-    // Increment dailyLogCount on cycle
-    const cycle = await kv.get(`cyc:${body.growCycleId}`) as any;
-    if (cycle) {
-      await kv.set(`cyc:${body.growCycleId}`, {
-        ...cycle,
-        dailyLogCount: (cycle.dailyLogCount ?? 0) + 1,
-        updatedAt: now,
-      });
-    }
+    await kv.set(`cyc:${body.growCycleId}`, {
+      ...cycle,
+      dailyLogCount: (cycle.dailyLogCount ?? 0) + 1,
+      updatedAt: now,
+    });
 
     return c.json(log, 201);
   } catch (e) {
@@ -266,13 +313,16 @@ app.post(`${BASE}/daily-logs`, async (c) => {
 
 app.put(`${BASE}/daily-logs/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
     const existing = await kv.get(`log:${id}`);
-    if (!existing) return c.json({ error: "Daily log not found" }, 404);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Daily log not found" }, 404);
     const updates = await c.req.json();
     const updated = {
       ...existing as object,
       ...updates,
+      userId: user.id,
       id,
       createdAt: (existing as any).createdAt,
     };
@@ -286,7 +336,11 @@ app.put(`${BASE}/daily-logs/:id`, async (c) => {
 
 app.delete(`${BASE}/daily-logs/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
+    const existing = await kv.get(`log:${id}`);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Daily log not found" }, 404);
     await kv.del(`log:${id}`);
     return c.json({ ok: true });
   } catch (e) {
@@ -298,16 +352,17 @@ app.delete(`${BASE}/daily-logs/:id`, async (c) => {
 // ── Photos ────────────────────────────────────────────────────────────────────
 app.get(`${BASE}/photos`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const growCycleId = c.req.query("growCycleId");
     const systemId = c.req.query("systemId");
     const dailyLogId = c.req.query("dailyLogId");
-    let items = await kv.getByPrefix("pho:") as any[];
+    let items = filterByUser(await kv.getByPrefix("pho:") as any[], user.id);
     if (growCycleId) items = items.filter((p) => p.growCycleId === growCycleId);
     if (systemId) items = items.filter((p) => p.systemId === systemId);
     if (dailyLogId) items = items.filter((p) => p.dailyLogId === dailyLogId);
     items.sort((a, b) => b.timestamp - a.timestamp);
 
-    // Attach signed URLs
     const withUrls = await Promise.all(
       items.map(async (photo) => {
         if (photo.storagePath) {
@@ -328,8 +383,10 @@ app.get(`${BASE}/photos`, async (c) => {
 
 app.get(`${BASE}/photos/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const val = await kv.get(`pho:${c.req.param("id")}`) as any;
-    if (!val) return c.json({ error: "Photo not found" }, 404);
+    if (!val || !ownedBy(val, user.id)) return c.json({ error: "Photo not found" }, 404);
     if (val.storagePath) {
       const { data } = await supabase.storage
         .from(PHOTO_BUCKET)
@@ -345,7 +402,11 @@ app.get(`${BASE}/photos/:id`, async (c) => {
 
 app.post(`${BASE}/photos`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const body = await c.req.json();
+    const cycle = await kv.get(`cyc:${body.growCycleId}`) as any;
+    if (!cycle || !ownedBy(cycle, user.id)) return c.json({ error: "Grow cycle not found" }, 404);
     const now = Date.now();
     const id = crypto.randomUUID();
 
@@ -353,7 +414,6 @@ app.post(`${BASE}/photos`, async (c) => {
     let signedUrl: string | undefined;
 
     if (body.imageData) {
-      // Upload base64 image to Supabase Storage
       const base64 = body.imageData.replace(/^data:[^;]+;base64,/, "");
       const buffer = Uint8Array.from(atob(base64), (c) => c.charCodeAt(0));
       storagePath = `${body.growCycleId}/${id}.jpg`;
@@ -372,22 +432,19 @@ app.post(`${BASE}/photos`, async (c) => {
 
     const photo = {
       ...body,
+      userId: user.id,
       id,
       createdAt: now,
-      imageData: undefined, // don't store base64 in KV
+      imageData: undefined,
       storagePath,
     };
     await kv.set(`pho:${id}`, photo);
 
-    // Increment photoCount on cycle
-    const cycle = await kv.get(`cyc:${body.growCycleId}`) as any;
-    if (cycle) {
-      await kv.set(`cyc:${body.growCycleId}`, {
-        ...cycle,
-        photoCount: (cycle.photoCount ?? 0) + 1,
-        updatedAt: now,
-      });
-    }
+    await kv.set(`cyc:${body.growCycleId}`, {
+      ...cycle,
+      photoCount: (cycle.photoCount ?? 0) + 1,
+      updatedAt: now,
+    });
 
     return c.json({ ...photo, signedUrl }, 201);
   } catch (e) {
@@ -398,9 +455,11 @@ app.post(`${BASE}/photos`, async (c) => {
 
 app.delete(`${BASE}/photos/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
     const photo = await kv.get(`pho:${id}`) as any;
-    if (!photo) return c.json({ error: "Photo not found" }, 404);
+    if (!photo || !ownedBy(photo, user.id)) return c.json({ error: "Photo not found" }, 404);
     if (photo.storagePath) {
       await supabase.storage.from(PHOTO_BUCKET).remove([photo.storagePath]);
     }
@@ -412,15 +471,7 @@ app.delete(`${BASE}/photos/:id`, async (c) => {
   }
 });
 
-// ── Auth / User Profiles ──────────────────────────────────────────────────────
-
-async function getAuthUser(req: Request): Promise<{ id: string; email?: string } | null> {
-  const token = req.headers.get("Authorization")?.split(" ")[1];
-  if (!token) return null;
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return null;
-  return user as { id: string; email?: string };
-}
+// ── Auth / User Profiles (legacy — unused in MVP) ─────────────────────────────
 
 // Get current user profile
 app.get(`${BASE}/auth/me`, async (c) => {
@@ -610,7 +661,9 @@ app.post(`${BASE}/auth/accept-invite`, async (c) => {
 // ── Financial Plans ───────────────────────────────────────────────────────────
 app.get(`${BASE}/financial-plans`, async (c) => {
   try {
-    const items = await kv.getByPrefix("pln:");
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
+    const items = filterByUser(await kv.getByPrefix("pln:"), user.id);
     return c.json(items);
   } catch (e) {
     console.log("Error listing financial plans:", e);
@@ -620,8 +673,10 @@ app.get(`${BASE}/financial-plans`, async (c) => {
 
 app.get(`${BASE}/financial-plans/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const val = await kv.get(`pln:${c.req.param("id")}`);
-    if (!val) return c.json({ error: "Financial plan not found" }, 404);
+    if (!val || !ownedBy(val, user.id)) return c.json({ error: "Financial plan not found" }, 404);
     return c.json(val);
   } catch (e) {
     console.log("Error getting financial plan:", e);
@@ -631,10 +686,13 @@ app.get(`${BASE}/financial-plans/:id`, async (c) => {
 
 app.post(`${BASE}/financial-plans`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const body = await c.req.json();
     const now = Date.now();
     const plan = {
       ...body,
+      userId: user.id,
       id: crypto.randomUUID(),
       createdAt: now,
       updatedAt: now,
@@ -649,13 +707,16 @@ app.post(`${BASE}/financial-plans`, async (c) => {
 
 app.put(`${BASE}/financial-plans/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
     const existing = await kv.get(`pln:${id}`);
-    if (!existing) return c.json({ error: "Financial plan not found" }, 404);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Financial plan not found" }, 404);
     const updates = await c.req.json();
     const updated = {
       ...existing as object,
       ...updates,
+      userId: user.id,
       id,
       createdAt: (existing as any).createdAt,
       updatedAt: Date.now(),
@@ -670,7 +731,11 @@ app.put(`${BASE}/financial-plans/:id`, async (c) => {
 
 app.delete(`${BASE}/financial-plans/:id`, async (c) => {
   try {
+    const user = await getAuthUser(c.req.raw);
+    if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
+    const existing = await kv.get(`pln:${id}`);
+    if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Financial plan not found" }, 404);
     await kv.del(`pln:${id}`);
     return c.json({ ok: true });
   } catch (e) {

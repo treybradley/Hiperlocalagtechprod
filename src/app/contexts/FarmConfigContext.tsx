@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CROPS } from '../data/crops';
 
 export type SystemType = 'nft' | 'dwc' | 'ebb-flow' | 'drip' | 'aeroponics' | 'microgreens';
@@ -84,14 +84,34 @@ const DEFAULT_BLOCKS: SystemBlock[] = [
   },
 ];
 
-export function FarmConfigProvider({ children }: { children: ReactNode }) {
-  const [config, setConfig] = useState<FarmConfig>({
+const DRAFT_STORAGE_KEY = 'hiperlocal-config-draft';
+
+function loadDraft(): FarmConfig | null {
+  try {
+    const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as FarmConfig;
+  } catch {
+    return null;
+  }
+}
+
+function buildDefaultConfig(): FarmConfig {
+  return {
     systemBlocks: DEFAULT_BLOCKS,
     cropParams: defaultCropParams(),
     environment: 'climate-controlled',
     lighting: 75,
     automation: 'semi-auto',
-  });
+  };
+}
+
+export function FarmConfigProvider({ children }: { children: ReactNode }) {
+  const [config, setConfig] = useState<FarmConfig>(() => loadDraft() ?? buildDefaultConfig());
+
+  useEffect(() => {
+    localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(config));
+  }, [config]);
 
   const addSystemBlock = () => {
     setConfig(prev => ({

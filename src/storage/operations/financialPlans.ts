@@ -1,12 +1,13 @@
-import { apiFetch } from '../api';
+import { apiFetchAuth } from '../api';
 
 export interface FinancialPlan {
   id: string;
+  userId: string;
   name: string;
   createdAt: number;
   updatedAt: number;
-  config: unknown; // FarmConfig snapshot
-  results: unknown; // calculated totals snapshot
+  config: unknown;
+  results: unknown;
 }
 
 export async function saveFinancialPlan(
@@ -14,16 +15,16 @@ export async function saveFinancialPlan(
   config: unknown,
   results: unknown
 ): Promise<FinancialPlan> {
-  return apiFetch<FinancialPlan>('/financial-plans', {
+  return apiFetchAuth<FinancialPlan>('/financial-plans', {
     method: 'POST',
     body: JSON.stringify({ name, config, results }),
   });
 }
 
 export async function listFinancialPlans(): Promise<FinancialPlan[]> {
-  return apiFetch<FinancialPlan[]>('/financial-plans');
+  return apiFetchAuth<FinancialPlan[]>('/financial-plans');
 }
 
 export async function deleteFinancialPlan(id: string): Promise<void> {
-  await apiFetch<{ ok: boolean }>(`/financial-plans/${id}`, { method: 'DELETE' });
+  await apiFetchAuth<{ ok: boolean }>(`/financial-plans/${id}`, { method: 'DELETE' });
 }

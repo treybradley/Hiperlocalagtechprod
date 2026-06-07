@@ -5,8 +5,7 @@ import {
 } from "./contexts/LanguageContext";
 import { FarmConfigProvider } from "./contexts/FarmConfigContext";
 import { AuthProvider, useAuth } from "./contexts/AuthContext";
-import { AuthGate } from "./components/AuthGate";
-import { OnboardingFlow } from "./components/OnboardingFlow";
+import { AuthModal } from "./components/AuthModal";
 import { HeroSection } from "./components/HeroSection";
 import { ConfiguratorSection } from "./components/ConfiguratorSection";
 import { FinancialCalculatorSection } from "./components/FinancialCalculatorSection";
@@ -45,22 +44,26 @@ function AppContent() {
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
-  const { session, profile, farm, loading: authLoading } = useAuth();
+  const { session, loading: authLoading, openAuthModal } = useAuth();
 
   // Initialize IndexedDB on mount (kept for any legacy reads)
   useEffect(() => {
     initDB().catch(console.error);
   }, []);
 
-  // Persist mode preference in localStorage
+  // Restore mode preference (operations requires auth)
   useEffect(() => {
+    if (authLoading) return;
     const savedMode = localStorage.getItem('hydroops-mode') as 'planning' | 'operations' | null;
-    if (savedMode === 'planning' || savedMode === 'operations') {
-      setMode(savedMode);
-    }
-  }, []);
+    if (savedMode === 'planning') setMode('planning');
+    else if (savedMode === 'operations' && session) setMode('operations');
+  }, [authLoading, session]);
 
   const handleModeChange = (newMode: 'planning' | 'operations' | 'about' | 'learn') => {
+    if (newMode === 'operations' && !session) {
+      openAuthModal(() => setMode('operations'));
+      return;
+    }
     setMode(newMode);
     if (newMode === 'planning' || newMode === 'operations') {
       localStorage.setItem('hydroops-mode', newMode);
@@ -157,9 +160,7 @@ function AppContent() {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [currentSection, isScrolling, mode]);
 
-  const CurrentComponent = sections[currentSection].component;
-
-  // Auth gates
+  // Brief auth init spinner only
   if (authLoading) {
     return (
       <div className="fixed inset-0 bg-[#0a0a0a] flex items-center justify-center">
@@ -167,12 +168,11 @@ function AppContent() {
       </div>
     );
   }
-  if (!session) return <AuthGate />;
-  if (!profile?.name || !farm) return <OnboardingFlow />;
 
   return (
     <div className="dark">
       <div className="relative w-screen h-screen overflow-hidden bg-[#0a0a0a]">
+        <AuthModal />
         {/* Top Navigation */}
         <TopNavigation mode={mode} onModeChange={handleModeChange} />
 
