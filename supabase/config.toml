@@ -1,0 +1,8 @@
+# Supabase project config — required for GitHub integration to deploy edge functions.
+# https://supabase.com/docs/guides/deployment/branching/github-integration
+
+project_id = "yaajawyyhefnaftlzrwo"
+
+[functions.make-server-4f58e216]
+verify_jwt = false
+entrypoint = "./index.tsx"
