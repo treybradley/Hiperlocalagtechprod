@@ -43,7 +43,7 @@ function uid() {
   return Math.random().toString(36).slice(2, 9);
 }
 
-interface FarmConfig {
+export interface FarmConfig {
   systemBlocks: SystemBlock[];
   cropParams: Record<string, CropParams>;
   environment: Environment;
@@ -60,6 +60,7 @@ interface FarmConfigContextType {
   updateCropInBlock: (blockId: string, cropId: string, patch: Partial<Pick<CropAllocation, 'plantsPerUnit' | 'unitCount'>>) => void;
   updateCropParam: (cropId: string, param: Partial<CropParams>) => void;
   updateConfig: (partial: Partial<Omit<FarmConfig, 'systemBlocks' | 'cropParams'>>) => void;
+  replaceConfig: (config: FarmConfig) => void;
 }
 
 const FarmConfigContext = createContext<FarmConfigContextType | undefined>(undefined);
@@ -183,10 +184,14 @@ export function FarmConfigProvider({ children }: { children: ReactNode }) {
     setConfig(prev => ({ ...prev, ...partial }));
   };
 
+  const replaceConfig = (next: FarmConfig) => {
+    setConfig(next);
+  };
+
   return (
     <FarmConfigContext.Provider value={{
       config, addSystemBlock, removeSystemBlock, updateSystemBlock,
-      toggleCropInBlock, updateCropInBlock, updateCropParam, updateConfig,
+      toggleCropInBlock, updateCropInBlock, updateCropParam, updateConfig, replaceConfig,
     }}>
       {children}
     </FarmConfigContext.Provider>

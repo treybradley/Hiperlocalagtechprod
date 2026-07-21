@@ -1,18 +1,21 @@
 import { useEffect, useState } from 'react';
-import { ArrowLeft, Plus, Calendar, TrendingUp, Droplets, Thermometer, ChevronRight, Image as ImageIcon, X, CheckCircle } from 'lucide-react';
+import { ArrowLeft, Plus, Calendar, TrendingUp, Droplets, Thermometer, ChevronRight, Image as ImageIcon, X, CheckCircle, Pencil, Trash2 } from 'lucide-react';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { GrowCycle, DailyLog, Photo, HydroponicSystem } from '../../../storage/models';
-import { getGrowCycle, advanceGrowCycleStage as advanceCycleStage } from '../../../storage/operations/growCycles';
-import { getDailyLogsByGrowCycle } from '../../../storage/operations/dailyLogs';
-import { getPhotosByGrowCycle } from '../../../storage/operations/photos';
+import { getGrowCycle, advanceGrowCycleStage as advanceCycleStage, deleteGrowCycle } from '../../../storage/operations/growCycles';
+import { getDailyLogsByGrowCycle, deleteDailyLog } from '../../../storage/operations/dailyLogs';
+import { getPhotoDisplayUrl, getPhotosByGrowCycle } from '../../../storage/operations/photos';
 import { getSystem } from '../../../storage/operations/systems';
 import { formatDate, getDaysSince, formatRelativeTime } from '../../../storage/utils/dateHelpers';
 import { RecordHarvestModal } from './modals/RecordHarvestModal';
+import { EditGrowCycleModal } from './modals/EditGrowCycleModal';
+import { DailyLogEntryModal } from './modals/DailyLogEntryModal';
+import { ConfirmDialog } from './modals/ConfirmDialog';
 
 interface GrowCycleDetailSectionProps {
   cycleId: string;
   onBack: () => void;
-  onAddLog: () => void;
+  onCycleDeleted?: () => void;
 }
 
 const STAGE_ORDER = ['germination', 'rootDevelopment', 'vegetativeGrowth', 'flowering', 'harvest'] as const;
@@ -20,7 +23,7 @@ const STAGE_ORDER = ['germination', 'rootDevelopment', 'vegetativeGrowth', 'flow
 export function GrowCycleDetailSection({
   cycleId,
   onBack,
-  onAddLog,
+  onCycleDeleted,
 }: GrowCycleDetailSectionProps) {
   const { t } = useLanguage();
   const [cycle, setCycle] = useState<GrowCycle | null>(null);
@@ -30,6 +33,12 @@ export function GrowCycleDetailSection({
   const [latestLog, setLatestLog] = useState<DailyLog | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<Photo | null>(null);
   const [showHarvestModal, setShowHarvestModal] = useState(false);
+  const [showEditCycleModal, setShowEditCycleModal] = useState(false);
+  const [showLogModal, setShowLogModal] = useState(false);
+  const [editingLog, setEditingLog] = useState<DailyLog | null>(null);
+  const [confirmDeleteCycle, setConfirmDeleteCycle] = useState(false);
+  const [logToDelete, setLogToDelete] = useState<DailyLog | null>(null);
+  const [deleting, setDeleting] = useState(false);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -80,6 +89,46 @@ export function GrowCycleDetailSection({
     }
   };
 
+  const handleOpenAddLog = () => {
+    setEditingLog(null);
+    setShowLogModal(true);
+  };
+
+  const handleOpenEditLog = (log: DailyLog) => {
+    setEditingLog(log);
+    setShowLogModal(true);
+  };
+
+  const handleDeleteCycle = async () => {
+    setDeleting(true);
+    try {
+      await deleteGrowCycle(cycleId);
+      setConfirmDeleteCycle(false);
+      onCycleDeleted?.();
+      onBack();
+    } catch (error) {
+      console.error('Failed to delete grow cycle:', error);
+      alert('Failed to delete grow cycle. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleDeleteLog = async () => {
+    if (!logToDelete) return;
+    setDeleting(true);
+    try {
+      await deleteDailyLog(logToDelete.id);
+      setLogToDelete(null);
+      await loadCycleData();
+    } catch (error) {
+      console.error('Failed to delete daily log:', error);
+      alert('Failed to delete daily log. Please try again.');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
@@ -122,14 +171,14 @@ export function GrowCycleDetailSection({
         <div className="absolute inset-0 bg-gradient-to-b from-green-500/10 via-transparent to-transparent" />
       </div>
 
-      <div className="relative h-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 pt-20 md:pt-24">
-        <div className="flex flex-col h-full gap-6 overflow-y-auto pr-2 md:pr-4 pb-24">
+      <div className="relative h-full max-w-7xl mx-auto pl-4 pr-4 md:pr-4 py-8 md:py-12 pt-20 md:pt-28">
+        <div className="flex flex-col h-full gap-6 overflow-y-auto pb-24">
 
           {/* Header */}
           <div className="flex-shrink-0">
             <button
               onClick={onBack}
-              className="flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-4"
+              className="flex items-center gap-2 text-xs font-light text-white/60 hover:text-white transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
               Back to System
@@ -137,7 +186,7 @@ export function GrowCycleDetailSection({
 
             <div className="flex items-start justify-between">
               <div>
-                <h1 className="text-4xl md:text-5xl text-white tracking-tight mb-2">
+                <h1 className="text-[32px] text-white tracking-tight mb-2">
                   {cycle.name}
                 </h1>
                 <div className="flex items-center gap-4 text-white/60">
@@ -149,22 +198,36 @@ export function GrowCycleDetailSection({
                 </div>
               </div>
 
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap justify-end">
+                <button
+                  onClick={() => setShowEditCycleModal(true)}
+                  className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-full px-4 py-2 sm:py-3 text-sm text-white transition-all"
+                >
+                  <Pencil className="w-4 h-4" />
+                  <span className="hidden sm:inline">Edit</span>
+                </button>
+                <button
+                  onClick={() => setConfirmDeleteCycle(true)}
+                  className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-full px-[15px] py-2 sm:py-3 text-xs font-normal text-red-300 transition-all"
+                >
+                  <Trash2 className="w-4 h-4" />
+                  <span className="hidden sm:inline">Delete</span>
+                </button>
                 {cycle.currentStage === 'harvest' && cycle.status === 'active' && (
                   <button
                     onClick={() => setShowHarvestModal(true)}
-                    className="flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm border border-blue-500/40 hover:border-blue-500/60 rounded-full px-6 py-3 transition-all duration-300 group hover:scale-105"
+                    className="flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm border border-blue-500/40 hover:border-blue-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group hover:scale-105"
                   >
                     <CheckCircle className="w-5 h-5 text-blue-400" />
-                    <span className="text-white">Record Harvest</span>
+                    <span className="text-white text-sm sm:text-base">Record Harvest</span>
                   </button>
                 )}
                 <button
-                  onClick={onAddLog}
-                  className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-6 py-3 transition-all duration-300 group hover:scale-105"
+                  onClick={handleOpenAddLog}
+                  className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group hover:scale-105 font-normal"
                 >
                   <Plus className="w-5 h-5 text-green-400" />
-                  <span className="text-white">Add Daily Log</span>
+                  <span className="text-white text-xs font-normal">Add Daily Log</span>
                 </button>
               </div>
             </div>
@@ -321,12 +384,16 @@ export function GrowCycleDetailSection({
               </button>
 
               <div className="max-w-5xl w-full max-h-[90vh] flex flex-col">
-                <img
-                  src={selectedPhoto.imageData}
-                  alt={selectedPhoto.caption || 'Photo'}
-                  className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
-                  onClick={(e) => e.stopPropagation()}
-                />
+                {getPhotoDisplayUrl(selectedPhoto) ? (
+                  <img
+                    src={getPhotoDisplayUrl(selectedPhoto)}
+                    alt={selectedPhoto.caption || 'Photo'}
+                    className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
+                    onClick={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <div className="text-white/60 text-center py-12">Photo unavailable</div>
+                )}
 
                 {selectedPhoto.caption && (
                   <div className="mt-4 bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
@@ -356,7 +423,7 @@ export function GrowCycleDetailSection({
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-12 text-center">
                 <div className="text-white/60 mb-4">No logs yet</div>
                 <button
-                  onClick={onAddLog}
+                  onClick={handleOpenAddLog}
                   className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all"
                 >
                   <Plus className="w-4 h-4" />
@@ -379,7 +446,22 @@ export function GrowCycleDetailSection({
                           {formatRelativeTime(log.timestamp)} • Day {getDaysSince(cycle.seedDate) - getDaysSince(log.timestamp) + getDaysSince(cycle.seedDate)}
                         </div>
                       </div>
-                      <div className={`px-3 py-1 rounded-full text-xs capitalize ${
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleOpenEditLog(log)}
+                          className="p-2 text-white/40 hover:text-white transition-colors"
+                          title="Edit log"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setLogToDelete(log)}
+                          className="p-2 text-white/40 hover:text-red-400 transition-colors"
+                          title="Delete log"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                        <div className={`px-3 py-1 rounded-full text-xs capitalize ${
                         log.plantHealth === 'excellent' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
                         log.plantHealth === 'good' ? 'bg-green-500/10 text-green-300 border border-green-500/20' :
                         log.plantHealth === 'fair' ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30' :
@@ -387,6 +469,7 @@ export function GrowCycleDetailSection({
                         'bg-red-500/20 text-red-400 border border-red-500/30'
                       }`}>
                         {log.plantHealth}
+                        </div>
                       </div>
                     </div>
 
@@ -487,11 +570,17 @@ export function GrowCycleDetailSection({
                                 onClick={() => setSelectedPhoto(photo)}
                                 className="group relative w-20 h-20 rounded-lg overflow-hidden border border-white/10 hover:border-green-500/50 transition-all shrink-0"
                               >
-                                <img
-                                  src={photo.thumbnail || photo.imageData}
-                                  alt={photo.caption || 'Log photo'}
-                                  className="w-full h-full object-cover"
-                                />
+                                {getPhotoDisplayUrl(photo) ? (
+                                  <img
+                                    src={getPhotoDisplayUrl(photo)}
+                                    alt={photo.caption || 'Log photo'}
+                                    className="w-full h-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center bg-white/5 text-white/30 text-xs">
+                                    No preview
+                                  </div>
+                                )}
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
                               </button>
                             ))}
@@ -510,12 +599,55 @@ export function GrowCycleDetailSection({
       {/* Floating Add Log Button (mobile) */}
       <div className="fixed bottom-24 right-6 sm:hidden z-[90]">
         <button
-          onClick={onAddLog}
+          onClick={handleOpenAddLog}
           className="w-14 h-14 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
         >
           <Plus className="w-6 h-6 text-green-400" />
         </button>
       </div>
+
+      <EditGrowCycleModal
+        isOpen={showEditCycleModal}
+        cycle={cycle}
+        onClose={() => setShowEditCycleModal(false)}
+        onSuccess={loadCycleData}
+      />
+
+      {system && (
+        <DailyLogEntryModal
+          isOpen={showLogModal}
+          growCycleId={cycleId}
+          systemId={system.id}
+          existingLog={editingLog}
+          onClose={() => {
+            setShowLogModal(false);
+            setEditingLog(null);
+          }}
+          onSuccess={() => loadCycleData()}
+        />
+      )}
+
+      <ConfirmDialog
+        isOpen={confirmDeleteCycle}
+        title="Delete grow cycle?"
+        description={`This will permanently delete "${cycle?.name}" and all ${dailyLogs.length} daily log${dailyLogs.length === 1 ? '' : 's'} and ${photos.length} photo${photos.length === 1 ? '' : 's'} associated with it. This cannot be undone.`}
+        confirmLabel="Delete cycle"
+        destructive
+        loading={deleting}
+        onConfirm={handleDeleteCycle}
+        onCancel={() => setConfirmDeleteCycle(false)}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(logToDelete)}
+        title="Delete daily log?"
+        description={`Permanently delete the log from ${logToDelete ? formatDate(logToDelete.timestamp) : ''}? Any photos attached to this log will also be removed.`}
+        confirmLabel="Delete log"
+        destructive
+        loading={deleting}
+        onConfirm={handleDeleteLog}
+        onCancel={() => setLogToDelete(null)}
+      />
 
       {/* Record Harvest Modal */}
       {cycle && system && (

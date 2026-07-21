@@ -34,7 +34,7 @@ const timeline = [
 export function AboutSection() {
   return (
     <div className="bg-[#0a0a0a] min-h-full">
-      <div className="max-w-4xl mx-auto px-6 py-12 space-y-20">
+      <div className="max-w-4xl mx-auto px-4 py-12 space-y-20">
 
         {/* Hero statement */}
         <div className="space-y-6">

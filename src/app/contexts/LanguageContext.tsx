@@ -487,6 +487,8 @@ const translations = {
       prevSlide: 'Ant.',
       planning: 'Ideación',
       operations: 'Operaciones',
+      learn: 'Aprender',
+      about: 'Acerca de',
     },
   },
   en: {
@@ -936,6 +938,8 @@ const translations = {
       prevSlide: 'Back',
       planning: 'Ideation',
       operations: 'Operations',
+      learn: 'Learn',
+      about: 'About',
     },
   },
 };

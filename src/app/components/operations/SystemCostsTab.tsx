@@ -1,7 +1,9 @@
 import { useState } from 'react';
-import { Plus, Trash2, ExternalLink, DollarSign, Calendar } from 'lucide-react';
+import { Plus, Trash2, ExternalLink, DollarSign, Calendar, Pencil } from 'lucide-react';
 import { HydroponicSystem } from '../../../storage/models';
 import { updateSystem } from '../../../storage/operations/systems';
+import { ConfirmDialog } from './modals/ConfirmDialog';
+import { OPS_FORM_SELECT_SM } from './opsFormClasses';
 
 interface SystemCostsTabProps {
   system: HydroponicSystem;
@@ -14,6 +16,11 @@ type RecurringCategory = 'utilities' | 'nutrients' | 'maintenance' | 'labor' | '
 export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
   const [showAddEquipment, setShowAddEquipment] = useState(false);
   const [showAddRecurring, setShowAddRecurring] = useState(false);
+  const [editingEquipmentId, setEditingEquipmentId] = useState<string | null>(null);
+  const [editingRecurringId, setEditingRecurringId] = useState<string | null>(null);
+  const [pendingDeleteEquipmentId, setPendingDeleteEquipmentId] = useState<string | null>(null);
+  const [pendingDeleteRecurringId, setPendingDeleteRecurringId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Equipment form state
   const [equipName, setEquipName] = useState('');
@@ -29,21 +36,47 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
   const [recurringAmount, setRecurringAmount] = useState('');
   const [recurringFrequency, setRecurringFrequency] = useState<'monthly' | 'yearly'>('monthly');
 
-  const handleAddEquipment = async () => {
+  const resetEquipmentForm = () => {
+    setEquipName('');
+    setEquipCategory('lighting');
+    setEquipCost('');
+    setEquipQuantity('1');
+    setEquipVendor('');
+    setEquipLink('');
+    setEditingEquipmentId(null);
+    setShowAddEquipment(false);
+  };
+
+  const startEditEquipment = (item: typeof system.operatingCosts.equipment[0]) => {
+    setEditingEquipmentId(item.id);
+    setEquipName(item.name);
+    setEquipCategory(item.category);
+    setEquipCost(String(item.cost));
+    setEquipQuantity(String(item.quantity));
+    setEquipVendor(item.vendor ?? '');
+    setEquipLink(item.purchaseLink ?? '');
+    setShowAddEquipment(true);
+  };
+
+  const handleSaveEquipment = async () => {
     if (!equipName || !equipCost) return;
 
-    const newEquipment = {
-      id: crypto.randomUUID(),
+    const equipmentData = {
+      id: editingEquipmentId ?? crypto.randomUUID(),
       name: equipName,
       category: equipCategory,
       cost: parseFloat(equipCost),
       quantity: parseInt(equipQuantity) || 1,
       vendor: equipVendor || undefined,
       purchaseLink: equipLink || undefined,
-      purchaseDate: Date.now(),
+      purchaseDate: editingEquipmentId
+        ? system.operatingCosts.equipment.find((e) => e.id === editingEquipmentId)?.purchaseDate ?? Date.now()
+        : Date.now(),
     };
 
-    const updatedEquipment = [...system.operatingCosts.equipment, newEquipment];
+    const updatedEquipment = editingEquipmentId
+      ? system.operatingCosts.equipment.map((e) => (e.id === editingEquipmentId ? equipmentData : e))
+      : [...system.operatingCosts.equipment, equipmentData];
     const totalCapital = updatedEquipment.reduce((sum, e) => sum + (e.cost * e.quantity), 0);
 
     await updateSystem(system.id, {
@@ -54,14 +87,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
       },
     });
 
-    // Reset form
-    setEquipName('');
-    setEquipCategory('lighting');
-    setEquipCost('');
-    setEquipQuantity('1');
-    setEquipVendor('');
-    setEquipLink('');
-    setShowAddEquipment(false);
+    resetEquipmentForm();
     onUpdate();
   };
 
@@ -77,21 +103,42 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
       },
     });
 
+    setPendingDeleteEquipmentId(null);
     onUpdate();
   };
 
-  const handleAddRecurring = async () => {
+  const resetRecurringForm = () => {
+    setRecurringName('');
+    setRecurringCategory('utilities');
+    setRecurringAmount('');
+    setRecurringFrequency('monthly');
+    setEditingRecurringId(null);
+    setShowAddRecurring(false);
+  };
+
+  const startEditRecurring = (cost: typeof system.operatingCosts.recurringCosts[0]) => {
+    setEditingRecurringId(cost.id);
+    setRecurringName(cost.name);
+    setRecurringCategory(cost.category);
+    setRecurringAmount(String(cost.amount));
+    setRecurringFrequency(cost.frequency === 'yearly' ? 'yearly' : 'monthly');
+    setShowAddRecurring(true);
+  };
+
+  const handleSaveRecurring = async () => {
     if (!recurringName || !recurringAmount) return;
 
-    const newCost = {
-      id: crypto.randomUUID(),
+    const costData = {
+      id: editingRecurringId ?? crypto.randomUUID(),
       name: recurringName,
       category: recurringCategory,
       amount: parseFloat(recurringAmount),
       frequency: recurringFrequency,
     };
 
-    const updatedRecurring = [...system.operatingCosts.recurringCosts, newCost];
+    const updatedRecurring = editingRecurringId
+      ? system.operatingCosts.recurringCosts.map((c) => (c.id === editingRecurringId ? costData : c))
+      : [...system.operatingCosts.recurringCosts, costData];
     const monthlyTotal = updatedRecurring.reduce((sum, c) => {
       const monthlyAmount = c.frequency === 'monthly' ? c.amount : c.amount / 12;
       return sum + monthlyAmount;
@@ -105,12 +152,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
       },
     });
 
-    // Reset form
-    setRecurringName('');
-    setRecurringCategory('utilities');
-    setRecurringAmount('');
-    setRecurringFrequency('monthly');
-    setShowAddRecurring(false);
+    resetRecurringForm();
     onUpdate();
   };
 
@@ -129,6 +171,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
       },
     });
 
+    setPendingDeleteRecurringId(null);
     onUpdate();
   };
 
@@ -176,7 +219,14 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl text-white">Equipment</h3>
           <button
-            onClick={() => setShowAddEquipment(!showAddEquipment)}
+            onClick={() => {
+              if (showAddEquipment && !editingEquipmentId) {
+                setShowAddEquipment(false);
+              } else {
+                resetEquipmentForm();
+                setShowAddEquipment(true);
+              }
+            }}
             className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all"
           >
             <Plus className="w-4 h-4" />
@@ -198,7 +248,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
               <select
                 value={equipCategory}
                 onChange={(e) => setEquipCategory(e.target.value as EquipmentCategory)}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                className={OPS_FORM_SELECT_SM}
               >
                 <option value="lighting">Lighting</option>
                 <option value="pumps">Pumps</option>
@@ -241,14 +291,14 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
             />
             <div className="flex gap-2">
               <button
-                onClick={handleAddEquipment}
+                onClick={handleSaveEquipment}
                 disabled={!equipName || !equipCost}
                 className="flex-1 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all disabled:opacity-50"
               >
-                Add
+                {editingEquipmentId ? 'Save Changes' : 'Add'}
               </button>
               <button
-                onClick={() => setShowAddEquipment(false)}
+                onClick={resetEquipmentForm}
                 className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
               >
                 Cancel
@@ -303,12 +353,22 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                       ${(item.cost * item.quantity).toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleRemoveEquipment(item.id)}
-                        className="text-white/40 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => startEditEquipment(item)}
+                          className="text-white/40 hover:text-white transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setPendingDeleteEquipmentId(item.id)}
+                          className="text-white/40 hover:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -327,7 +387,14 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl text-white">Recurring Costs</h3>
           <button
-            onClick={() => setShowAddRecurring(!showAddRecurring)}
+            onClick={() => {
+              if (showAddRecurring && !editingRecurringId) {
+                setShowAddRecurring(false);
+              } else {
+                resetRecurringForm();
+                setShowAddRecurring(true);
+              }
+            }}
             className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all"
           >
             <Plus className="w-4 h-4" />
@@ -349,7 +416,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
               <select
                 value={recurringCategory}
                 onChange={(e) => setRecurringCategory(e.target.value as RecurringCategory)}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                className={OPS_FORM_SELECT_SM}
               >
                 <option value="utilities">Utilities</option>
                 <option value="nutrients">Nutrients</option>
@@ -369,7 +436,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
               <select
                 value={recurringFrequency}
                 onChange={(e) => setRecurringFrequency(e.target.value as 'monthly' | 'yearly')}
-                className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                className={OPS_FORM_SELECT_SM}
               >
                 <option value="monthly">Monthly</option>
                 <option value="yearly">Yearly</option>
@@ -377,14 +444,14 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
             </div>
             <div className="flex gap-2">
               <button
-                onClick={handleAddRecurring}
+                onClick={handleSaveRecurring}
                 disabled={!recurringName || !recurringAmount}
                 className="flex-1 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all disabled:opacity-50"
               >
-                Add
+                {editingRecurringId ? 'Save Changes' : 'Add'}
               </button>
               <button
-                onClick={() => setShowAddRecurring(false)}
+                onClick={resetRecurringForm}
                 className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
               >
                 Cancel
@@ -424,12 +491,22 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                       ${(cost.frequency === 'monthly' ? cost.amount : cost.amount / 12).toFixed(2)}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <button
-                        onClick={() => handleRemoveRecurring(cost.id)}
-                        className="text-white/40 hover:text-red-400 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => startEditRecurring(cost)}
+                          className="text-white/40 hover:text-white transition-colors"
+                          title="Edit"
+                        >
+                          <Pencil className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setPendingDeleteRecurringId(cost.id)}
+                          className="text-white/40 hover:text-red-400 transition-colors"
+                          title="Delete"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -442,6 +519,44 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
           </div>
         )}
       </div>
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteEquipmentId)}
+        title="Remove equipment?"
+        description={`Remove "${system.operatingCosts.equipment.find((e) => e.id === pendingDeleteEquipmentId)?.name ?? 'this item'}" from the equipment list?`}
+        confirmLabel="Remove"
+        destructive
+        loading={deleting}
+        onConfirm={async () => {
+          if (!pendingDeleteEquipmentId) return;
+          setDeleting(true);
+          try {
+            await handleRemoveEquipment(pendingDeleteEquipmentId);
+          } finally {
+            setDeleting(false);
+          }
+        }}
+        onCancel={() => setPendingDeleteEquipmentId(null)}
+      />
+
+      <ConfirmDialog
+        isOpen={Boolean(pendingDeleteRecurringId)}
+        title="Remove recurring cost?"
+        description={`Remove "${system.operatingCosts.recurringCosts.find((c) => c.id === pendingDeleteRecurringId)?.name ?? 'this cost'}" from recurring costs?`}
+        confirmLabel="Remove"
+        destructive
+        loading={deleting}
+        onConfirm={async () => {
+          if (!pendingDeleteRecurringId) return;
+          setDeleting(true);
+          try {
+            await handleRemoveRecurring(pendingDeleteRecurringId);
+          } finally {
+            setDeleting(false);
+          }
+        }}
+        onCancel={() => setPendingDeleteRecurringId(null)}
+      />
     </div>
   );
 }

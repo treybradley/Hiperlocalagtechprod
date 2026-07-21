@@ -178,9 +178,11 @@ export interface Photo {
   growCycleId: string;
   dailyLogId?: string;
 
-  // Image data
-  imageData: string;
+  // Image data (legacy inline) or storage-backed URL from API
+  imageData?: string;
   thumbnail?: string;
+  signedUrl?: string;
+  storagePath?: string;
 
   // Metadata
   caption?: string;

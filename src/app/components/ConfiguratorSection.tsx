@@ -47,12 +47,12 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
         <div className="absolute inset-0 bg-gradient-to-b from-[#0a0a0a] via-[#0a0a0a]/95 to-[#0a0a0a]" />
       </div>
 
-      <div className={`relative h-full max-w-7xl mx-auto px-4 md:px-8 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex flex-col gap-4 h-full overflow-y-auto pr-2 pb-24 pt-24">
+      <div className={`relative h-full max-w-7xl mx-auto px-4 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="flex flex-col gap-4 h-full overflow-y-auto pb-24 pt-24">
 
           {/* Header */}
           <div className="flex-shrink-0">
-            <h2 className="text-white font-thin tracking-tight text-[32px]">
+            <h2 className="text-white font-thin tracking-tight text-[32px] pt-[72px]">
               {t('configurator.subtitle')}
               <br />
               <span className="text-white/40">{t('configurator.subtitle2')}</span>

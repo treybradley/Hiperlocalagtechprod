@@ -41,6 +41,10 @@ export async function updateGrowCycle(
   });
 }
 
+export async function deleteGrowCycle(id: string): Promise<void> {
+  await apiFetchAuth<{ ok: boolean }>(`/grow-cycles/${id}`, { method: 'DELETE' });
+}
+
 export async function advanceGrowCycleStage(
   cycleId: string,
   newStage: 'rootDevelopment' | 'vegetativeGrowth' | 'flowering' | 'harvest' | 'completed'

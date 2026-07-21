@@ -3,6 +3,14 @@ import { X } from 'lucide-react';
 import { createGrowCycle } from '../../../../storage/operations/growCycles';
 import { createDailyLog } from '../../../../storage/operations/dailyLogs';
 import { GrowCycle } from '../../../../storage/models';
+import {
+  addDays,
+  daysBetweenLocalDateStrings,
+  parseLocalDateString,
+  todayLocalDateInputValue,
+  toLocalDateInputValue,
+} from '../../../../storage/utils/dateHelpers';
+import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_FORM_SELECT } from '../opsFormClasses';
 
 interface CreateGrowCycleModalProps {
   isOpen: boolean;
@@ -37,7 +45,7 @@ export function CreateGrowCycleModal({
 }: CreateGrowCycleModalProps) {
   const [name, setName] = useState('');
   const [cropType, setCropType] = useState('');
-  const [seedDate, setSeedDate] = useState(new Date().toISOString().split('T')[0]);
+  const [seedDate, setSeedDate] = useState(todayLocalDateInputValue());
   const [initialPlantCount, setInitialPlantCount] = useState('');
   const [targetHarvestDate, setTargetHarvestDate] = useState('');
   const [saving, setSaving] = useState(false);
@@ -50,10 +58,8 @@ export function CreateGrowCycleModal({
     // Auto-suggest harvest date based on crop growth days
     const crop = CROP_OPTIONS.find(c => c.value === selectedCrop);
     if (crop && seedDate) {
-      const seedTimestamp = new Date(seedDate).getTime();
-      const harvestTimestamp = seedTimestamp + (crop.growthDays * 24 * 60 * 60 * 1000);
-      const harvestDate = new Date(harvestTimestamp).toISOString().split('T')[0];
-      setTargetHarvestDate(harvestDate);
+      const seedTimestamp = parseLocalDateString(seedDate);
+      setTargetHarvestDate(toLocalDateInputValue(addDays(seedTimestamp, crop.growthDays)));
     }
   };
 
@@ -64,9 +70,9 @@ export function CreateGrowCycleModal({
 
     setSaving(true);
     try {
-      const seedTimestamp = new Date(seedDate).getTime();
+      const seedTimestamp = parseLocalDateString(seedDate);
       const harvestTimestamp = targetHarvestDate
-        ? new Date(targetHarvestDate).getTime()
+        ? parseLocalDateString(targetHarvestDate)
         : undefined;
 
       // Create grow cycle
@@ -117,7 +123,7 @@ export function CreateGrowCycleModal({
   const resetForm = () => {
     setName('');
     setCropType('');
-    setSeedDate(new Date().toISOString().split('T')[0]);
+    setSeedDate(todayLocalDateInputValue());
     setInitialPlantCount('');
     setTargetHarvestDate('');
   };
@@ -153,7 +159,7 @@ export function CreateGrowCycleModal({
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="e.g., Spring 2026 Basil Cycle"
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
+              className={OPS_FORM_INPUT}
             />
           </div>
 
@@ -162,7 +168,7 @@ export function CreateGrowCycleModal({
             <select
               value={cropType}
               onChange={(e) => handleCropSelect(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
+              className={OPS_FORM_SELECT}
             >
               <option value="">Select a crop...</option>
               <optgroup label="Herbs">
@@ -196,7 +202,7 @@ export function CreateGrowCycleModal({
                 type="date"
                 value={seedDate}
                 onChange={(e) => setSeedDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
+                className={OPS_FORM_DATE}
               />
             </div>
             <div>
@@ -205,7 +211,7 @@ export function CreateGrowCycleModal({
                 type="date"
                 value={targetHarvestDate}
                 onChange={(e) => setTargetHarvestDate(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
+                className={OPS_FORM_DATE}
               />
             </div>
           </div>
@@ -225,7 +231,7 @@ export function CreateGrowCycleModal({
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
               <div className="text-sm text-white/70 mb-1">Estimated Cycle Duration</div>
               <div className="text-lg text-green-400">
-                {Math.ceil((new Date(targetHarvestDate).getTime() - new Date(seedDate).getTime()) / (24 * 60 * 60 * 1000))} days
+                {daysBetweenLocalDateStrings(seedDate, targetHarvestDate)} days
               </div>
             </div>
           )}

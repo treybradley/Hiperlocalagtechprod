@@ -2,7 +2,7 @@ import { Hono } from "npm:hono";
 import { cors } from "npm:hono/cors";
 import { logger } from "npm:hono/logger";
 import { createClient } from "npm:@supabase/supabase-js";
-import * as kv from "./kv_store.tsx";
+import * as kv from "./kv_store.ts";
 
 const app = new Hono();
 
@@ -28,7 +28,7 @@ app.use(
   "/*",
   cors({
     origin: "*",
-    allowHeaders: ["Content-Type", "Authorization"],
+    allowHeaders: ["Content-Type", "Authorization", "apikey"],
     allowMethods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     exposeHeaders: ["Content-Length"],
     maxAge: 600,
@@ -40,14 +40,33 @@ const BASE = "/make-server-4f58e216";
 async function getAuthUser(req: Request): Promise<{ id: string; email?: string } | null> {
   const authHeader = req.headers.get("Authorization");
   if (!authHeader?.startsWith("Bearer ")) return null;
+
+  const url = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!url || !anonKey) {
+    console.log("getAuthUser: missing SUPABASE_URL or SUPABASE_ANON_KEY");
+    return null;
+  }
+
   const token = authHeader.slice(7);
-  const { data: { user }, error } = await supabase.auth.getUser(token);
-  if (error || !user) return null;
+  if (token === anonKey) return null;
+
+  const userClient = createClient(url, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: { user }, error } = await userClient.auth.getUser();
+  if (error || !user) {
+    console.log("getAuthUser error:", error?.message);
+    return null;
+  }
   return user as { id: string; email?: string };
 }
 
 function ownedBy(record: any, userId: string): boolean {
-  return record?.userId === userId;
+  if (!record) return false;
+  // Legacy records saved before user scoping may lack userId
+  if (!record.userId) return true;
+  return record.userId === userId;
 }
 
 function filterByUser(items: any[], userId: string): any[] {
@@ -241,9 +260,42 @@ app.delete(`${BASE}/grow-cycles/:id`, async (c) => {
     const user = await getAuthUser(c.req.raw);
     if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
-    const existing = await kv.get(`cyc:${id}`);
+    const existing = await kv.get(`cyc:${id}`) as any;
     if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Grow cycle not found" }, 404);
+
+    const allLogs = filterByUser(await kv.getByPrefix("log:") as any[], user.id);
+    const cycleLogs = allLogs.filter((l) => l.growCycleId === id);
+    for (const log of cycleLogs) {
+      await kv.del(`log:${log.id}`);
+    }
+
+    const allPhotos = filterByUser(await kv.getByPrefix("pho:") as any[], user.id);
+    const cyclePhotos = allPhotos.filter((p) => p.growCycleId === id);
+    const storagePaths = cyclePhotos
+      .map((p) => p.storagePath)
+      .filter((path): path is string => Boolean(path));
+    if (storagePaths.length > 0) {
+      await supabase.storage.from(PHOTO_BUCKET).remove(storagePaths);
+    }
+    for (const photo of cyclePhotos) {
+      await kv.del(`pho:${photo.id}`);
+    }
+
     await kv.del(`cyc:${id}`);
+
+    const sys = await kv.get(`sys:${existing.systemId}`) as any;
+    if (sys && ownedBy(sys, user.id)) {
+      const updated: Record<string, unknown> = {
+        ...sys,
+        totalCycles: Math.max(0, (sys.totalCycles ?? 0) - 1),
+        updatedAt: Date.now(),
+      };
+      if (sys.activeCycleId === id) {
+        updated.activeCycleId = undefined;
+      }
+      await kv.set(`sys:${existing.systemId}`, updated);
+    }
+
     return c.json({ ok: true });
   } catch (e) {
     console.log("Error deleting grow cycle:", e);
@@ -339,9 +391,38 @@ app.delete(`${BASE}/daily-logs/:id`, async (c) => {
     const user = await getAuthUser(c.req.raw);
     if (!user) return c.json({ error: "Unauthorized" }, 401);
     const id = c.req.param("id");
-    const existing = await kv.get(`log:${id}`);
+    const existing = await kv.get(`log:${id}`) as any;
     if (!existing || !ownedBy(existing, user.id)) return c.json({ error: "Daily log not found" }, 404);
+
+    const allPhotos = filterByUser(await kv.getByPrefix("pho:") as any[], user.id);
+    const logPhotos = allPhotos.filter((p) => p.dailyLogId === id);
+    const storagePaths = logPhotos
+      .map((p) => p.storagePath)
+      .filter((path): path is string => Boolean(path));
+    if (storagePaths.length > 0) {
+      await supabase.storage.from(PHOTO_BUCKET).remove(storagePaths);
+    }
+    for (const photo of logPhotos) {
+      await kv.del(`pho:${photo.id}`);
+    }
+
     await kv.del(`log:${id}`);
+
+    const cycle = await kv.get(`cyc:${existing.growCycleId}`) as any;
+    if (cycle && ownedBy(cycle, user.id)) {
+      const logIssues = existing.issues ?? [];
+      const issueCount = logIssues.length;
+      const resolvedCount = logIssues.filter((i: { resolved: boolean }) => i.resolved).length;
+      await kv.set(`cyc:${existing.growCycleId}`, {
+        ...cycle,
+        dailyLogCount: Math.max(0, (cycle.dailyLogCount ?? 0) - 1),
+        issueCount: Math.max(0, (cycle.issueCount ?? 0) - issueCount),
+        resolvedIssueCount: Math.max(0, (cycle.resolvedIssueCount ?? 0) - resolvedCount),
+        photoCount: Math.max(0, (cycle.photoCount ?? 0) - logPhotos.length),
+        updatedAt: Date.now(),
+      });
+    }
+
     return c.json({ ok: true });
   } catch (e) {
     console.log("Error deleting daily log:", e);
@@ -464,6 +545,28 @@ app.delete(`${BASE}/photos/:id`, async (c) => {
       await supabase.storage.from(PHOTO_BUCKET).remove([photo.storagePath]);
     }
     await kv.del(`pho:${id}`);
+
+    if (photo.dailyLogId) {
+      const log = await kv.get(`log:${photo.dailyLogId}`) as any;
+      if (log && ownedBy(log, user.id)) {
+        await kv.set(`log:${photo.dailyLogId}`, {
+          ...log,
+          photoIds: (log.photoIds ?? []).filter((pid: string) => pid !== id),
+        });
+      }
+    }
+
+    if (photo.growCycleId) {
+      const cycle = await kv.get(`cyc:${photo.growCycleId}`) as any;
+      if (cycle && ownedBy(cycle, user.id)) {
+        await kv.set(`cyc:${photo.growCycleId}`, {
+          ...cycle,
+          photoCount: Math.max(0, (cycle.photoCount ?? 0) - 1),
+          updatedAt: Date.now(),
+        });
+      }
+    }
+
     return c.json({ ok: true });
   } catch (e) {
     console.log("Error deleting photo:", e);

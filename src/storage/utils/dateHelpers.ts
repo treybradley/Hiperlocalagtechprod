@@ -1,5 +1,31 @@
 // Date utility functions for timestamp handling
 
+/** Parse YYYY-MM-DD from a date input as a local calendar date (noon avoids DST edge cases). */
+export function parseLocalDateString(dateStr: string): number {
+  const [y, m, d] = dateStr.split('-').map(Number);
+  return new Date(y, m - 1, d, 12, 0, 0, 0).getTime();
+}
+
+/** Format a timestamp as YYYY-MM-DD in local time (for date inputs). */
+export function toLocalDateInputValue(timestamp: number): string {
+  const d = new Date(timestamp);
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${y}-${m}-${day}`;
+}
+
+/** Today's date as YYYY-MM-DD in local time. */
+export function todayLocalDateInputValue(): string {
+  return toLocalDateInputValue(Date.now());
+}
+
+/** Whole-day difference between two YYYY-MM-DD strings in local time. */
+export function daysBetweenLocalDateStrings(start: string, end: string): number {
+  const ms = parseLocalDateString(end) - parseLocalDateString(start);
+  return Math.round(ms / 86400000);
+}
+
 export function formatDate(timestamp: number): string {
   return new Date(timestamp).toLocaleDateString('en-US', {
     year: 'numeric',

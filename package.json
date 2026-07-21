@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "build": "vite build",
-    "dev": "vite"
+    "dev": "vite",
+    "supabase:login": "supabase login",
+    "supabase:deploy": "supabase functions deploy make-server-4f58e216 --project-ref yaajawyyhefnaftlzrwo --use-api"
   },
   "dependencies": {
     "@emotion/react": "11.14.0",
@@ -72,6 +74,7 @@
   "devDependencies": {
     "@tailwindcss/vite": "4.1.12",
     "@vitejs/plugin-react": "4.7.0",
+    "supabase": "^2.105.0",
     "tailwindcss": "4.1.12",
     "vite": "6.3.5"
   },

@@ -81,7 +81,7 @@ export function LearnSection() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-[0px] py-[40px]">
+      <div className="max-w-4xl mx-auto px-4 py-[40px]">
 
         {/* ── Crops ─────────────────────────────────────────────────────────── */}
         {activeTab === 'crops' && (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import {
   LanguageProvider,
   useLanguage,
@@ -8,7 +8,8 @@ import { AuthProvider, useAuth } from "./contexts/AuthContext";
 import { AuthModal } from "./components/AuthModal";
 import { HeroSection } from "./components/HeroSection";
 import { ConfiguratorSection } from "./components/ConfiguratorSection";
-import { FinancialCalculatorSection } from "./components/FinancialCalculatorSection";
+import { FinancialCalculatorSection, type PlanLoadRequest } from "./components/FinancialCalculatorSection";
+import { FinancialPlanDetailSection } from "./components/operations/FinancialPlanDetailSection";
 import { AboutSection } from "./components/AboutSection";
 import { LearnSection } from "./components/LearnSection";
 import { NavigationDots } from "./components/NavigationDots";
@@ -20,10 +21,11 @@ import { SystemDetailSection } from "./components/operations/SystemDetailSection
 import { GrowCycleDetailSection } from "./components/operations/GrowCycleDetailSection";
 import { CreateSystemModal } from "./components/operations/modals/CreateSystemModal";
 import { CreateGrowCycleModal } from "./components/operations/modals/CreateGrowCycleModal";
-import { DailyLogEntryModal } from "./components/operations/modals/DailyLogEntryModal";
 import { initDB } from "../storage/db";
 import { HydroponicSystem, GrowCycle } from "../storage/models";
 import { Leaf, Box, BarChart3 } from "lucide-react";
+
+const FINANCIAL_SECTION_INDEX = 2;
 
 const sections = [
   { id: "hero", component: HeroSection, icon: Leaf },
@@ -36,12 +38,13 @@ function AppContent() {
   const [currentSection, setCurrentSection] = useState(0);
   const [isScrolling, setIsScrolling] = useState(false);
   const [mode, setMode] = useState<'planning' | 'operations' | 'about' | 'learn'>('planning');
-  const [operationsView, setOperationsView] = useState<'home' | 'system-detail' | 'cycle-detail'>('home');
+  const [operationsView, setOperationsView] = useState<'home' | 'system-detail' | 'cycle-detail' | 'financial-plan-detail'>('home');
   const [showCreateSystemModal, setShowCreateSystemModal] = useState(false);
   const [showCreateCycleModal, setShowCreateCycleModal] = useState(false);
-  const [showDailyLogModal, setShowDailyLogModal] = useState(false);
   const [selectedSystemId, setSelectedSystemId] = useState<string | null>(null);
   const [selectedCycleId, setSelectedCycleId] = useState<string | null>(null);
+  const [selectedFinancialPlanId, setSelectedFinancialPlanId] = useState<string | null>(null);
+  const [planLoadRequest, setPlanLoadRequest] = useState<PlanLoadRequest | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const { session, loading: authLoading, openAuthModal } = useAuth();
@@ -105,6 +108,31 @@ function AppContent() {
     setOperationsView('home');
     setSelectedSystemId(null);
     setSelectedCycleId(null);
+    setSelectedFinancialPlanId(null);
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleViewFinancialPlan = (planId: string) => {
+    setSelectedFinancialPlanId(planId);
+    setOperationsView('financial-plan-detail');
+  };
+
+  const handleCreateFinancialPlan = () => {
+    setPlanLoadRequest({ type: 'new' });
+    setMode('planning');
+    setCurrentSection(FINANCIAL_SECTION_INDEX);
+    localStorage.setItem('hydroops-mode', 'planning');
+  };
+
+  const handleFinancialPlanDeleted = () => {
+    setSelectedFinancialPlanId(null);
+    setOperationsView('home');
+    setRefreshTrigger(prev => prev + 1);
+  };
+
+  const handleFinancialPlanDuplicated = (planId: string) => {
+    setSelectedFinancialPlanId(planId);
+    setOperationsView('financial-plan-detail');
     setRefreshTrigger(prev => prev + 1);
   };
 
@@ -121,14 +149,6 @@ function AppContent() {
   const handleViewCycle = (cycleId: string) => {
     setSelectedCycleId(cycleId);
     setOperationsView('cycle-detail');
-  };
-
-  const handleAddDailyLog = () => {
-    setShowDailyLogModal(true);
-  };
-
-  const handleDailyLogCreated = () => {
-    setRefreshTrigger(prev => prev + 1);
   };
 
   const handleBackToSystemDetail = () => {
@@ -188,6 +208,12 @@ function AppContent() {
             >
               {sections.map((section, index) => {
                 const Component = section.component;
+                const extraProps = section.id === 'financial'
+                  ? {
+                      planLoadRequest,
+                      onPlanLoadHandled: () => setPlanLoadRequest(null),
+                    }
+                  : {};
                 return (
                   <div key={section.id} className="w-full h-screen">
                     <Component
@@ -196,6 +222,7 @@ function AppContent() {
                       onPrevSlide={handlePrevSlide}
                       isFirstSlide={index === 0}
                       isLastSlide={index === sections.length - 1}
+                      {...extraProps}
                     />
                   </div>
                 );
@@ -210,17 +237,19 @@ function AppContent() {
             />
 
             {/* Section Label */}
-            <div className="fixed top-27 lg:left-8 md:left-8 sm: left-3 z-[100] ">
-              <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-md px-[12px] py-[9px]">
-                {(() => {
-                  const SectionIcon = sections[currentSection].icon;
-                  return (
-                    <SectionIcon className="w-3 h-3 text-green-400" />
-                  );
-                })()}
-                <span className="text-xs text-white/70 uppercase tracking-wider">
-                  {t(`nav.${sections[currentSection].id}`)}
-                </span>
+            <div className="fixed top-27 left-0 right-0 z-[100] pointer-events-none">
+              <div className="max-w-7xl mx-auto">
+                <div className="flex items-center gap-3 bg-white/5 backdrop-blur-sm rounded-md px-[12px] py-[9px] w-fit pointer-events-auto">
+                  {(() => {
+                    const SectionIcon = sections[currentSection].icon;
+                    return (
+                      <SectionIcon className="w-3 h-3 text-green-400" />
+                    );
+                  })()}
+                  <span className="text-xs text-white/70 uppercase tracking-wider">
+                    {t(`nav.${sections[currentSection].id}`)}
+                  </span>
+                </div>
               </div>
             </div>
 
@@ -258,6 +287,20 @@ function AppContent() {
                 key={refreshTrigger}
                 onCreateSystem={handleCreateSystem}
                 onViewSystem={handleViewSystem}
+                onViewFinancialPlan={handleViewFinancialPlan}
+                onCreateFinancialPlan={handleCreateFinancialPlan}
+                onDuplicateFinancialPlan={handleFinancialPlanDuplicated}
+              />
+            )}
+
+            {operationsView === 'financial-plan-detail' && selectedFinancialPlanId && (
+              <FinancialPlanDetailSection
+                key={selectedFinancialPlanId}
+                planId={selectedFinancialPlanId}
+                onBack={handleBackToOperationsHome}
+                onSaved={() => setRefreshTrigger(prev => prev + 1)}
+                onDeleted={handleFinancialPlanDeleted}
+                onDuplicated={handleFinancialPlanDuplicated}
               />
             )}
 
@@ -276,7 +319,7 @@ function AppContent() {
                 key={refreshTrigger}
                 cycleId={selectedCycleId}
                 onBack={handleBackToSystemDetail}
-                onAddLog={handleAddDailyLog}
+                onCycleDeleted={() => setRefreshTrigger(prev => prev + 1)}
               />
             )}
           </div>
@@ -297,16 +340,6 @@ function AppContent() {
               onClose={() => setShowCreateCycleModal(false)}
               onSuccess={handleCycleCreated}
             />
-
-            {selectedCycleId && (
-              <DailyLogEntryModal
-                isOpen={showDailyLogModal}
-                growCycleId={selectedCycleId}
-                systemId={selectedSystemId}
-                onClose={() => setShowDailyLogModal(false)}
-                onSuccess={handleDailyLogCreated}
-              />
-            )}
           </>
         )}
       </div>

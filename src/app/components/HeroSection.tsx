@@ -29,17 +29,17 @@ export function HeroSection({ isActive, onNextSlide, isLastSlide, onPrevSlide, i
       <div className="absolute inset-0 opacity-[0.03] mix-blend-overlay pointer-events-none bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzMDAiIGhlaWdodD0iMzAwIj48ZmlsdGVyIGlkPSJhIiB4PSIwIiB5PSIwIj48ZmVUdXJidWxlbmNlIGJhc2VGcmVxdWVuY3k9Ii43NSIgc3RpdGNoVGlsZXM9InN0aXRjaCIgdHlwZT0iZnJhY3RhbE5vaXNlIi8+PGZlQ29sb3JNYXRyaXggdHlwZT0ic2F0dXJhdGUiIHZhbHVlcz0iMCIvPjwvZmlsdGVyPjxwYXRoIGQ9Ik0wIDBoMzAwdjMwMEgweiIgZmlsdGVyPSJ1cmwoI2EpIiBvcGFjaXR5PSIuMDUiLz48L3N2Zz4=')]" />
 
       {/* Content Grid */}
-      <div className={`relative h-full max-w-7xl mx-auto px-4 md:px-8 py-8 md:py-12 pt-20 md:pt-24 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex flex-col h-full gap-4 md:gap-6 overflow-y-auto pr-2 md:pr-4 pb-24">
+      <div className={`relative h-full max-w-7xl mx-auto px-4 py-8 md:py-12 pt-20 md:pt-24 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
+        <div className="flex flex-col h-full gap-4 md:gap-6 overflow-y-auto pb-24">
           {/* Top Section */}
           
 
           {/* Hero Content */}
-          <div className="flex-shrink-0 space-y-8 px-[0px] pt-[60px] pb-[24px]">
+          <div className="flex-shrink-0 space-y-8 px-0 pt-[81px] pb-[24px]">
             <div className="space-y-6 max-w-4xl">
 
 
-              <h2 className="tracking-tight font-thin text-white leading-[0.95] text-[48px]">
+              <h2 className="tracking-tight font-thin text-white leading-[0.95] text-[32px]">
                 {t('hero.title1')}
                 <br />
                 <span className="text-white/40">{t('hero.title2')}</span>

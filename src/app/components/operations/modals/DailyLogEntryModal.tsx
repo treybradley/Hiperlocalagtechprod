@@ -1,14 +1,26 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { X, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
-import { createDailyLog } from '../../../../storage/operations/dailyLogs';
-import { createPhoto } from '../../../../storage/operations/photos';
-import { DailyLog } from '../../../../storage/models';
+import { createDailyLog, updateDailyLog } from '../../../../storage/operations/dailyLogs';
+import {
+  createPhoto,
+  deletePhoto,
+  getPhotoDisplayUrl,
+  getPhotosByDailyLog,
+} from '../../../../storage/operations/photos';
+import { DailyLog, Photo } from '../../../../storage/models';
 import { formatBytes } from '../../../../storage/utils/imageCompression';
+import {
+  parseLocalDateString,
+  toLocalDateInputValue,
+  todayLocalDateInputValue,
+} from '../../../../storage/utils/dateHelpers';
+import { OPS_FORM_DATE, OPS_FORM_SELECT_SM } from '../opsFormClasses';
 
 interface DailyLogEntryModalProps {
   isOpen: boolean;
   growCycleId: string;
   systemId: string;
+  existingLog?: DailyLog | null;
   onClose: () => void;
   onSuccess: (log: DailyLog) => void;
 }
@@ -20,10 +32,12 @@ export function DailyLogEntryModal({
   isOpen,
   growCycleId,
   systemId,
+  existingLog,
   onClose,
   onSuccess,
 }: DailyLogEntryModalProps) {
-  const [logDate, setLogDate] = useState(new Date().toISOString().split('T')[0]);
+  const isEditing = Boolean(existingLog);
+  const [logDate, setLogDate] = useState(todayLocalDateInputValue());
   const [temperature, setTemperature] = useState('');
   const [humidity, setHumidity] = useState('');
   const [ph, setPh] = useState('');
@@ -41,7 +55,64 @@ export function DailyLogEntryModal({
   const [issues, setIssues] = useState<Array<{ severity: IssueSeverity; description: string; resolved: boolean }>>([]);
 
   const [photos, setPhotos] = useState<Array<{ file: File; preview: string; caption: string }>>([]);
+  const [existingPhotos, setExistingPhotos] = useState<Photo[]>([]);
+  const [removedExistingPhotoIds, setRemovedExistingPhotoIds] = useState<Set<string>>(new Set());
+  const [loadingExistingPhotos, setLoadingExistingPhotos] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const visibleExistingPhotos = existingPhotos.filter((p) => !removedExistingPhotoIds.has(p.id));
+  const totalPhotoCount = visibleExistingPhotos.length + photos.length;
+
+  useEffect(() => {
+    if (!isOpen) return;
+    if (existingLog) {
+      setLogDate(toLocalDateInputValue(existingLog.timestamp));
+      setTemperature(existingLog.environment.temperature?.toString() ?? '');
+      setHumidity(existingLog.environment.humidity?.toString() ?? '');
+      setPh(existingLog.environment.ph?.toString() ?? '');
+      setEc(existingLog.environment.ec?.toString() ?? '');
+      setWaterTemp(existingLog.environment.waterTemp?.toString() ?? '');
+      setLightLevel(existingLog.environment.lightLevel?.toString() ?? '');
+      setPlantHealth(existingLog.plantHealth);
+      setObservations(existingLog.observations);
+      setVisualChanges(existingLog.visualChanges ?? '');
+      setExperimentNotes(existingLog.experimentNotes ?? '');
+      setWaterAdded(existingLog.waterAdded?.toString() ?? '');
+      setNutrientsAdded(existingLog.nutrientsAdded ?? '');
+      setTasks(existingLog.tasksPerformed.map((t) => ({ task: t.task })));
+      setIssues(existingLog.issues.map((i) => ({
+        severity: i.severity,
+        description: i.description,
+        resolved: i.resolved,
+      })));
+      setPhotos([]);
+      setRemovedExistingPhotoIds(new Set());
+      setLoadingExistingPhotos(true);
+      getPhotosByDailyLog(existingLog.id)
+        .then(setExistingPhotos)
+        .catch(() => setExistingPhotos([]))
+        .finally(() => setLoadingExistingPhotos(false));
+    } else {
+      setExistingPhotos([]);
+      setRemovedExistingPhotoIds(new Set());
+      setLogDate(todayLocalDateInputValue());
+      setTemperature('');
+      setHumidity('');
+      setPh('');
+      setEc('');
+      setWaterTemp('');
+      setLightLevel('');
+      setPlantHealth('good');
+      setObservations('');
+      setVisualChanges('');
+      setExperimentNotes('');
+      setWaterAdded('');
+      setNutrientsAdded('');
+      setTasks([]);
+      setIssues([]);
+      setPhotos([]);
+    }
+  }, [isOpen, existingLog?.id]);
 
   if (!isOpen) return null;
 
@@ -77,7 +148,9 @@ export function DailyLogEntryModal({
     const files = e.target.files;
     if (!files) return;
 
-    const newPhotos = Array.from(files).slice(0, 5 - photos.length);
+    const slotsLeft = 5 - visibleExistingPhotos.length - photos.length;
+    if (slotsLeft <= 0) return;
+    const newPhotos = Array.from(files).slice(0, slotsLeft);
     const photoPromises = newPhotos.map((file) => {
       return new Promise<{ file: File; preview: string; caption: string }>((resolve) => {
         const reader = new FileReader();
@@ -107,6 +180,10 @@ export function DailyLogEntryModal({
     setPhotos(updated);
   };
 
+  const removeExistingPhoto = (photoId: string) => {
+    setRemovedExistingPhotoIds((prev) => new Set([...prev, photoId]));
+  };
+
   const canSave = observations.trim().length > 0;
 
   const handleSave = async () => {
@@ -114,12 +191,8 @@ export function DailyLogEntryModal({
 
     setSaving(true);
     try {
-      const logTimestamp = new Date(logDate).getTime();
-
-      // Create daily log first
-      const log = await createDailyLog({
-        growCycleId,
-        systemId,
+      const logTimestamp = parseLocalDateString(logDate);
+      const payload = {
         timestamp: logTimestamp,
         environment: {
           temperature: temperature ? parseFloat(temperature) : undefined,
@@ -136,49 +209,77 @@ export function DailyLogEntryModal({
           .filter(t => t.task.trim())
           .map(t => ({ task: t.task, timestamp: logTimestamp })),
         issues: issues.filter(i => i.description.trim()),
-        photoIds: [],
         waterAdded: waterAdded ? parseFloat(waterAdded) : undefined,
         nutrientsAdded: nutrientsAdded || undefined,
         experimentNotes: experimentNotes || undefined,
-      });
+      };
 
-      // Upload photos and link to log
-      const photoIds: string[] = [];
-      for (const photoData of photos) {
-        const photo = await createPhoto(
-          {
-            systemId,
-            growCycleId,
-            dailyLogId: log.id,
-            timestamp: logTimestamp,
-            caption: photoData.caption || undefined,
-            tags: [],
-          },
-          photoData.file
-        );
-        photoIds.push(photo.id);
-      }
+      if (isEditing && existingLog) {
+        for (const photoId of removedExistingPhotoIds) {
+          await deletePhoto(photoId);
+        }
 
-      // Update log with photo IDs if any photos were uploaded
-      if (photoIds.length > 0) {
-        await import('../../../../storage/operations/dailyLogs').then(({ updateDailyLog }) => {
-          updateDailyLog(log.id, { photoIds });
+        let photoIds = existingLog.photoIds.filter((id) => !removedExistingPhotoIds.has(id));
+        for (const photoData of photos) {
+          const photo = await createPhoto(
+            {
+              systemId,
+              growCycleId,
+              dailyLogId: existingLog.id,
+              timestamp: logTimestamp,
+              caption: photoData.caption || undefined,
+              tags: [],
+            },
+            photoData.file
+          );
+          photoIds.push(photo.id);
+        }
+
+        await updateDailyLog(existingLog.id, { ...payload, photoIds });
+        onSuccess({ ...existingLog, ...payload, photoIds });
+      } else {
+        const log = await createDailyLog({
+          growCycleId,
+          systemId,
+          ...payload,
+          photoIds: [],
         });
+
+        const photoIds: string[] = [];
+        for (const photoData of photos) {
+          const photo = await createPhoto(
+            {
+              systemId,
+              growCycleId,
+              dailyLogId: log.id,
+              timestamp: logTimestamp,
+              caption: photoData.caption || undefined,
+              tags: [],
+            },
+            photoData.file
+          );
+          photoIds.push(photo.id);
+        }
+
+        if (photoIds.length > 0) {
+          await updateDailyLog(log.id, { photoIds });
+        }
+
+        onSuccess({ ...log, photoIds });
       }
 
-      onSuccess(log);
       resetForm();
       onClose();
     } catch (error) {
-      console.error('Failed to create daily log:', error);
-      alert('Failed to create log. Please try again.');
+      console.error('Failed to save daily log:', error);
+      alert(`Failed to ${isEditing ? 'update' : 'create'} log. Please try again.`);
     } finally {
       setSaving(false);
     }
   };
 
   const resetForm = () => {
-    setLogDate(new Date().toISOString().split('T')[0]);
+    setLogDate(todayLocalDateInputValue());
     setTemperature('');
     setHumidity('');
     setPh('');
@@ -194,6 +295,8 @@ export function DailyLogEntryModal({
     setTasks([]);
     setIssues([]);
     setPhotos([]);
+    setExistingPhotos([]);
+    setRemovedExistingPhotoIds(new Set());
   };
 
   const handleClose = () => {
@@ -205,10 +308,12 @@ export function DailyLogEntryModal({
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="relative bg-[#0a0a0a] border border-white/20 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
+        <div className="flex items-center justify-between p-[18px] border-b border-white/10">
           <div>
-            <h2 className="text-2xl text-white">Add Daily Log</h2>
-            <p className="text-sm text-white/60 mt-1">Record today's observations and metrics</p>
+            <h2 className="text-lg text-white">{isEditing ? 'Edit Daily Log' : 'Add Daily Log'}</h2>
+            <p className="text-sm text-white/60 mt-1">
+              {isEditing ? 'Update observations and metrics' : "Record today's observations and metrics"}
+            </p>
           </div>
           <button
             onClick={handleClose}
@@ -219,7 +324,7 @@ export function DailyLogEntryModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
+        <div className="p-[18px] overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
           {/* Date */}
           <div>
             <label className="block text-sm text-white/70 mb-2">Log Date</label>
@@ -227,7 +332,7 @@ export function DailyLogEntryModal({
               type="date"
               value={logDate}
               onChange={(e) => setLogDate(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
+              className={OPS_FORM_DATE}
             />
           </div>
 
@@ -431,7 +536,7 @@ export function DailyLogEntryModal({
                     <select
                       value={issue.severity}
                       onChange={(e) => updateIssue(index, { severity: e.target.value as IssueSeverity })}
-                      className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                      className={OPS_FORM_SELECT_SM}
                     >
                       <option value="low">Low</option>
                       <option value="medium">Medium</option>
@@ -483,12 +588,13 @@ export function DailyLogEntryModal({
               <div>
                 <h3 className="text-white">Photos (0-5)</h3>
                 <p className="text-xs text-white/40 mt-1">
-                  {photos.length}/5 photos • {photos.reduce((sum, p) => sum + p.file.size, 0) > 0
-                    ? formatBytes(photos.reduce((sum, p) => sum + p.file.size, 0))
-                    : '0 KB'}
+                  {totalPhotoCount}/5 photos
+                  {photos.length > 0 && (
+                    <> • {formatBytes(photos.reduce((sum, p) => sum + p.file.size, 0))} new</>
+                  )}
                 </p>
               </div>
-              {photos.length < 5 && (
+              {totalPhotoCount < 5 && (
                 <label className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white cursor-pointer transition-all">
                   <Upload className="w-4 h-4" />
                   Upload
@@ -503,16 +609,50 @@ export function DailyLogEntryModal({
               )}
             </div>
 
-            {photos.length > 0 && (
+            {loadingExistingPhotos && isEditing && (
+              <p className="text-sm text-white/40 mb-3">Loading saved photos...</p>
+            )}
+
+            {(visibleExistingPhotos.length > 0 || photos.length > 0) && (
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                {visibleExistingPhotos.map((photo) => (
+                  <div key={photo.id} className="relative bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                    {getPhotoDisplayUrl(photo) ? (
+                      <img
+                        src={getPhotoDisplayUrl(photo)}
+                        alt={photo.caption || 'Saved photo'}
+                        className="w-full h-32 object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-32 flex items-center justify-center bg-white/5 text-white/30 text-xs">
+                        No preview
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => removeExistingPhoto(photo.id)}
+                      className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 rounded-full p-1 transition-colors"
+                      title="Remove photo"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </button>
+                    <div className="p-2">
+                      {photo.caption && (
+                        <p className="text-xs text-white/70 truncate">{photo.caption}</p>
+                      )}
+                      <div className="text-xs text-white/40 mt-1">Saved</div>
+                    </div>
+                  </div>
+                ))}
                 {photos.map((photo, index) => (
-                  <div key={index} className="relative bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                  <div key={`new-${index}`} className="relative bg-white/5 border border-green-500/20 rounded-xl overflow-hidden">
                     <img
                       src={photo.preview}
                       alt={`Upload ${index + 1}`}
                       className="w-full h-32 object-cover"
                     />
                     <button
+                      type="button"
                       onClick={() => removePhoto(index)}
                       className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 rounded-full p-1 transition-colors"
                     >
@@ -526,8 +666,8 @@ export function DailyLogEntryModal({
                         placeholder="Caption (optional)"
                         className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                       />
-                      <div className="text-xs text-white/40 mt-1">
-                        {formatBytes(photo.file.size)}
+                      <div className="text-xs text-green-400/70 mt-1">
+                        New • {formatBytes(photo.file.size)}
                       </div>
                     </div>
                   </div>
@@ -535,7 +675,7 @@ export function DailyLogEntryModal({
               </div>
             )}
 
-            {photos.length === 0 && (
+            {totalPhotoCount === 0 && !loadingExistingPhotos && (
               <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center">
                 <ImageIcon className="w-12 h-12 text-white/20 mx-auto mb-3" />
                 <p className="text-sm text-white/40 mb-3">No photos added yet</p>
@@ -559,7 +699,7 @@ export function DailyLogEntryModal({
         <div className="flex items-center justify-between p-6 border-t border-white/10">
           <button
             onClick={handleClose}
-            className="text-white/60 hover:text-white transition-colors"
+            className="text-xs text-white/60 hover:text-white transition-colors"
           >
             Cancel
           </button>
@@ -567,11 +707,11 @@ export function DailyLogEntryModal({
           <button
             onClick={handleSave}
             disabled={!canSave || saving}
-            className={`flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-6 py-3 transition-all ${
+            className={`flex items-center gap-2 text-xs text-white bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-[18px] py-3 transition-all ${
               !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {saving ? 'Saving...' : 'Save Log'}
+            {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Save Log'}
           </button>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X, ChevronRight, ChevronLeft, Plus, Trash2 } from 'lucide-react';
 import { createSystem } from '../../../../storage/operations/systems';
 import { HydroponicSystem } from '../../../../storage/models';
+import { OPS_FORM_SELECT, OPS_FORM_SELECT_SM } from '../opsFormClasses';
 
 interface CreateSystemModalProps {
   isOpen: boolean;
@@ -233,7 +234,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                 <select
                   value={systemType}
                   onChange={(e) => setSystemType(e.target.value as SystemType)}
-                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
+                  className={OPS_FORM_SELECT}
                 >
                   <option value="nft">NFT (Nutrient Film Technique)</option>
                   <option value="dwc">DWC (Deep Water Culture)</option>
@@ -436,7 +437,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                         <select
                           value={item.category}
                           onChange={(e) => updateEquipment(item.id, { category: e.target.value as EquipmentCategory })}
-                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                          className={OPS_FORM_SELECT_SM}
                         >
                           <option value="lighting">Lighting</option>
                           <option value="pumps">Pumps</option>
@@ -507,7 +508,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                         <select
                           value={cost.category}
                           onChange={(e) => updateRecurringCost(cost.id, { category: e.target.value as RecurringCostCategory })}
-                          className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                          className={OPS_FORM_SELECT_SM}
                         >
                           <option value="utilities">Utilities</option>
                           <option value="nutrients">Nutrients</option>
@@ -526,7 +527,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                           <select
                             value={cost.frequency}
                             onChange={(e) => updateRecurringCost(cost.id, { frequency: e.target.value as 'monthly' | 'yearly' })}
-                            className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-green-500/50"
+                            className={`flex-1 ${OPS_FORM_SELECT_SM}`}
                           >
                             <option value="monthly">/ mo</option>
                             <option value="yearly">/ yr</option>

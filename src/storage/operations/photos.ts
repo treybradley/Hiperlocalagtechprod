@@ -1,26 +1,24 @@
 import { Photo } from '../models';
 import { apiFetchAuth } from '../api';
+import { compressImage } from '../utils/imageCompression';
+
+export function getPhotoDisplayUrl(photo: Photo): string | undefined {
+  return photo.signedUrl || photo.thumbnail || photo.imageData;
+}
 
 export async function createPhoto(
-  photo: Omit<Photo, 'id' | 'createdAt' | 'thumbnail' | 'fileSize' | 'dimensions'>,
+  photo: Omit<Photo, 'id' | 'createdAt' | 'thumbnail' | 'fileSize' | 'dimensions' | 'imageData' | 'signedUrl' | 'storagePath'>,
   imageFile: File
 ): Promise<Photo> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = async () => {
-      try {
-        const base64 = reader.result as string;
-        const result = await apiFetchAuth<Photo>('/photos', {
-          method: 'POST',
-          body: JSON.stringify({ ...photo, imageData: base64 }),
-        });
-        resolve(result);
-      } catch (e) {
-        reject(e);
-      }
-    };
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(imageFile);
+  const { base64, width, height, fileSize } = await compressImage(imageFile);
+  return apiFetchAuth<Photo>('/photos', {
+    method: 'POST',
+    body: JSON.stringify({
+      ...photo,
+      imageData: base64,
+      fileSize,
+      dimensions: { width, height },
+    }),
   });
 }
 
