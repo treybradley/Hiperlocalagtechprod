@@ -172,7 +172,7 @@ export function GrowCycleDetailSection({
       </div>
 
       <div className="relative h-full max-w-7xl mx-auto pl-4 pr-4 md:pr-4 py-8 md:py-12 pt-20 md:pt-28">
-        <div className="flex flex-col h-full gap-6 overflow-y-auto pb-24">
+        <div className="flex flex-col h-full gap-6 overflow-y-auto hiper-scroll px-1 pb-24">
 
           {/* Header */}
           <div className="flex-shrink-0">
@@ -216,7 +216,7 @@ export function GrowCycleDetailSection({
                 {cycle.currentStage === 'harvest' && cycle.status === 'active' && (
                   <button
                     onClick={() => setShowHarvestModal(true)}
-                    className="flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm border border-blue-500/40 hover:border-blue-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group hover:scale-105"
+                    className="flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm border border-blue-500/40 hover:border-blue-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group"
                   >
                     <CheckCircle className="w-5 h-5 text-blue-400" />
                     <span className="text-white text-sm sm:text-base">Record Harvest</span>
@@ -224,7 +224,7 @@ export function GrowCycleDetailSection({
                 )}
                 <button
                   onClick={handleOpenAddLog}
-                  className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group hover:scale-105 font-normal"
+                  className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group font-normal"
                 >
                   <Plus className="w-5 h-5 text-green-400" />
                   <span className="text-white text-xs font-normal">Add Daily Log</span>
@@ -600,7 +600,7 @@ export function GrowCycleDetailSection({
       <div className="fixed bottom-24 right-6 sm:hidden z-[90]">
         <button
           onClick={handleOpenAddLog}
-          className="w-14 h-14 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full flex items-center justify-center shadow-lg transition-all hover:scale-110"
+          className="w-14 h-14 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full flex items-center justify-center shadow-lg transition-all"
         >
           <Plus className="w-6 h-6 text-green-400" />
         </button>

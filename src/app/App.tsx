@@ -269,12 +269,12 @@ function AppContent() {
 
         {/* About & Learn — inline pages under the shared nav */}
         {mode === 'about' && (
-          <div className="w-full h-full pt-[72px] sm:pt-[80px] overflow-y-auto">
+          <div className="w-full h-full pt-[72px] sm:pt-[80px] overflow-y-auto hiper-scroll">
             <AboutSection />
           </div>
         )}
         {mode === 'learn' && (
-          <div className="w-full h-full pt-[72px] sm:pt-[80px] overflow-y-auto">
+          <div className="w-full h-full pt-[72px] sm:pt-[80px] overflow-y-auto hiper-scroll">
             <LearnSection />
           </div>
         )}

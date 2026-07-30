@@ -7,7 +7,8 @@ import {
   createStartupCostItem,
   fmtCurrency,
 } from '../../utils/financialPlanHelpers';
-import { OPS_FORM_INPUT_SM, OPS_FORM_SELECT_SM } from './opsFormClasses';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { OPS_FORM_INPUT_SM, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER_SM } from './opsFormClasses';
 
 const STARTUP_CATEGORIES = Object.keys(STARTUP_COST_CATEGORY_LABELS) as StartupCostCategory[];
 
@@ -110,15 +111,21 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
               placeholder="Item name"
               className={OPS_FORM_INPUT_SM}
             />
-            <select
+            <Select
               value={form.category}
-              onChange={e => setForm(prev => ({ ...prev, category: e.target.value as StartupCostCategory }))}
-              className={OPS_FORM_SELECT_SM}
+              onValueChange={v => setForm(prev => ({ ...prev, category: v as StartupCostCategory }))}
             >
-              {STARTUP_CATEGORIES.map(cat => (
-                <option key={cat} value={cat}>{STARTUP_COST_CATEGORY_LABELS[cat]}</option>
-              ))}
-            </select>
+              <SelectTrigger className={OPS_SELECT_TRIGGER_SM}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                {STARTUP_CATEGORIES.map(cat => (
+                  <SelectItem key={cat} value={cat} className={OPS_SELECT_ITEM}>
+                    {STARTUP_COST_CATEGORY_LABELS[cat]}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
           <div className="grid grid-cols-2 gap-2">
             <input
@@ -173,7 +180,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
       )}
 
       {items.length > 0 ? (
-        <div className="space-y-2 max-h-72 overflow-y-auto pr-0.5">
+        <div className="space-y-2 max-h-72 overflow-y-auto hiper-scroll pr-0.5">
           {items.map(item => {
             const lineTotal = item.cost * item.quantity;
             return (

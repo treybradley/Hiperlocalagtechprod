@@ -3,7 +3,8 @@ import { Plus, Trash2, ExternalLink, DollarSign, Calendar, Pencil } from 'lucide
 import { HydroponicSystem } from '../../../storage/models';
 import { updateSystem } from '../../../storage/operations/systems';
 import { ConfirmDialog } from './modals/ConfirmDialog';
-import { OPS_FORM_SELECT_SM } from './opsFormClasses';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
+import { OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER_SM } from './opsFormClasses';
 
 interface SystemCostsTabProps {
   system: HydroponicSystem;
@@ -245,19 +246,23 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 placeholder="Item name"
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
-              <select
+              <Select
                 value={equipCategory}
-                onChange={(e) => setEquipCategory(e.target.value as EquipmentCategory)}
-                className={OPS_FORM_SELECT_SM}
+                onValueChange={v => setEquipCategory(v as EquipmentCategory)}
               >
-                <option value="lighting">Lighting</option>
-                <option value="pumps">Pumps</option>
-                <option value="nutrients">Nutrients</option>
-                <option value="seeds">Seeds</option>
-                <option value="structure">Structure</option>
-                <option value="sensors">Sensors</option>
-                <option value="other">Other</option>
-              </select>
+                <SelectTrigger className={OPS_SELECT_TRIGGER_SM}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                  <SelectItem value="lighting" className={OPS_SELECT_ITEM}>Lighting</SelectItem>
+                  <SelectItem value="pumps" className={OPS_SELECT_ITEM}>Pumps</SelectItem>
+                  <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
+                  <SelectItem value="seeds" className={OPS_SELECT_ITEM}>Seeds</SelectItem>
+                  <SelectItem value="structure" className={OPS_SELECT_ITEM}>Structure</SelectItem>
+                  <SelectItem value="sensors" className={OPS_SELECT_ITEM}>Sensors</SelectItem>
+                  <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-3 gap-3">
               <input
@@ -413,17 +418,21 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 placeholder="Cost name"
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
-              <select
+              <Select
                 value={recurringCategory}
-                onChange={(e) => setRecurringCategory(e.target.value as RecurringCategory)}
-                className={OPS_FORM_SELECT_SM}
+                onValueChange={v => setRecurringCategory(v as RecurringCategory)}
               >
-                <option value="utilities">Utilities</option>
-                <option value="nutrients">Nutrients</option>
-                <option value="maintenance">Maintenance</option>
-                <option value="labor">Labor</option>
-                <option value="other">Other</option>
-              </select>
+                <SelectTrigger className={OPS_SELECT_TRIGGER_SM}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                  <SelectItem value="utilities" className={OPS_SELECT_ITEM}>Utilities</SelectItem>
+                  <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
+                  <SelectItem value="maintenance" className={OPS_SELECT_ITEM}>Maintenance</SelectItem>
+                  <SelectItem value="labor" className={OPS_SELECT_ITEM}>Labor</SelectItem>
+                  <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <input
@@ -433,14 +442,18 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 placeholder="Amount (USD)"
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
-              <select
+              <Select
                 value={recurringFrequency}
-                onChange={(e) => setRecurringFrequency(e.target.value as 'monthly' | 'yearly')}
-                className={OPS_FORM_SELECT_SM}
+                onValueChange={v => setRecurringFrequency(v as 'monthly' | 'yearly')}
               >
-                <option value="monthly">Monthly</option>
-                <option value="yearly">Yearly</option>
-              </select>
+                <SelectTrigger className={OPS_SELECT_TRIGGER_SM}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
+                  <SelectItem value="monthly" className={OPS_SELECT_ITEM}>Monthly</SelectItem>
+                  <SelectItem value="yearly" className={OPS_SELECT_ITEM}>Yearly</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <div className="flex gap-2">
               <button

@@ -6,6 +6,7 @@ import { getAllSystems } from '../../../storage/operations/systems';
 import { listFinancialPlans, type FinancialPlan } from '../../../storage/operations/financialPlans';
 import { formatRelativeTime } from '../../../storage/utils/dateHelpers';
 import { fmtCurrency, formatPlanDate, duplicateFinancialPlan } from '../../utils/financialPlanHelpers';
+import { SYSTEM_TYPE_LABELS } from '../../data/crops';
 
 interface OperationsHomeSectionProps {
   onCreateSystem: () => void;
@@ -100,7 +101,7 @@ export function OperationsHomeSection({
       </div>
 
       <div className="relative h-full max-w-7xl mx-auto px-4 py-8 md:py-12 pt-20 md:pt-24">
-        <div className="flex flex-col h-full gap-10 overflow-y-auto pl-0 pr-0 pt-[21px] pb-[96px]">
+        <div className="flex flex-col h-full gap-10 overflow-y-auto hiper-scroll px-1 pt-[21px] pb-[96px]">
 
           {(systemsError || plansError) && (
             <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4 flex items-start gap-3">
@@ -147,7 +148,7 @@ export function OperationsHomeSection({
               </div>
               <button
                 onClick={onCreateSystem}
-                className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-lg transition-all duration-300 group hover:scale-105 px-[18px] py-[9px]"
+                className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-lg transition-all duration-300 group px-[18px] py-[9px]"
               >
                 <Plus className="w-5 h-5 text-green-400 shrink-0" />
                 <span className="text-white hidden sm:inline text-[12px]">Create New System</span>
@@ -170,7 +171,7 @@ export function OperationsHomeSection({
                 </p>
                 <button
                   onClick={onCreateSystem}
-                  className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-md transition-all duration-300 hover:scale-105 px-[18px] py-[9px]"
+                  className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-md transition-all duration-300 px-[18px] py-[9px]"
                 >
                   <Plus className="w-5 h-5 text-green-400" />
                   <span className="text-white font-medium text-[12px]">Get Started</span>
@@ -197,7 +198,7 @@ export function OperationsHomeSection({
                         {system.status}
                       </div>
                       <div className="px-3 py-1 rounded-full text-xs bg-white/5 text-white/70 border border-white/10">
-                        {system.systemType.toUpperCase()}
+                        {SYSTEM_TYPE_LABELS[system.systemType] ?? system.systemType}
                       </div>
                     </div>
 
@@ -248,7 +249,7 @@ export function OperationsHomeSection({
               </div>
               <button
                 onClick={onCreateFinancialPlan}
-                className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-lg transition-all duration-300 group hover:scale-105 px-[18px] py-[9px]"
+                className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-lg transition-all duration-300 group px-[18px] py-[9px]"
               >
                 <Plus className="w-5 h-5 text-green-400 shrink-0" />
                 <span className="text-white hidden sm:inline text-[12px]">Create New Plan</span>
@@ -270,7 +271,7 @@ export function OperationsHomeSection({
                 </p>
                 <button
                   onClick={onCreateFinancialPlan}
-                  className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-md transition-all duration-300 hover:scale-105 px-[18px] py-[9px]"
+                  className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-md transition-all duration-300 px-[18px] py-[9px]"
                 >
                   <Plus className="w-5 h-5 text-green-400" />
                   <span className="text-white font-medium text-[12px]">Create a Plan</span>

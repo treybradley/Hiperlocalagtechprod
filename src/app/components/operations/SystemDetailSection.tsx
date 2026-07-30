@@ -7,6 +7,7 @@ import { getGrowCyclesBySystem } from '../../../storage/operations/growCycles';
 import { formatDate, getDaysSince, formatRelativeTime } from '../../../storage/utils/dateHelpers';
 import { SystemCostsTab } from './SystemCostsTab';
 import { SystemResultsTab } from './SystemResultsTab';
+import { SYSTEM_TYPE_LABELS } from '../../data/crops';
 
 interface SystemDetailSectionProps {
   systemId: string;
@@ -107,7 +108,7 @@ export function SystemDetailSection({
       </div>
 
       <div className="relative h-full max-w-7xl mx-auto px-4 py-8 md:py-12 pt-20 md:pt-28">
-        <div className="flex flex-col h-full gap-6 overflow-y-auto pb-24">
+        <div className="flex flex-col h-full gap-6 overflow-y-auto hiper-scroll px-1 pb-24">
 
           {/* Header */}
           <div className="flex-shrink-0">
@@ -135,7 +136,7 @@ export function SystemDetailSection({
                 </div>
               </div>
               <div className="flex items-center gap-3 text-xs text-white/60">
-                <span>{system.systemType.toUpperCase()}</span>
+                <span>{SYSTEM_TYPE_LABELS[system.systemType] ?? system.systemType}</span>
                 <span>•</span>
                 <span>{system.location}</span>
                 <span>•</span>
@@ -270,7 +271,7 @@ export function SystemDetailSection({
               <h2 className="text-2xl text-white">Grow Cycles</h2>
               <button
                 onClick={onStartCycle}
-                className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-md sm:px-5 sm:py-2 p-2 transition-all duration-300 hover:scale-105"
+                className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-md sm:px-5 sm:py-2 p-2 transition-all duration-300"
               >
                 <Plus className="w-4 h-4 text-green-400 shrink-0" />
                 <span className="text-white text-sm hidden sm:inline">Start New Cycle</span>
@@ -286,7 +287,7 @@ export function SystemDetailSection({
                 <p className="text-white/60 mb-6">Start your first grow cycle to begin tracking</p>
                 <button
                   onClick={onStartCycle}
-                  className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-6 py-3 transition-all duration-300 hover:scale-105"
+                  className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-6 py-3 transition-all duration-300"
                 >
                   <Plus className="w-5 h-5 text-green-400" />
                   <span className="text-white">Start First Cycle</span>

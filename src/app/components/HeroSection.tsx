@@ -30,7 +30,7 @@ export function HeroSection({ isActive, onNextSlide, isLastSlide, onPrevSlide, i
 
       {/* Content Grid */}
       <div className={`relative h-full max-w-7xl mx-auto px-4 py-8 md:py-12 pt-20 md:pt-24 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex flex-col h-full gap-4 md:gap-6 overflow-y-auto pb-24">
+        <div className="flex flex-col h-full gap-4 md:gap-6 overflow-y-auto hiper-scroll pb-24 px-1">
           {/* Top Section */}
           
 

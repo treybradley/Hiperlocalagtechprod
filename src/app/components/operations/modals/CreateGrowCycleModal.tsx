@@ -10,7 +10,8 @@ import {
   todayLocalDateInputValue,
   toLocalDateInputValue,
 } from '../../../../storage/utils/dateHelpers';
-import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_FORM_SELECT } from '../opsFormClasses';
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../../ui/select';
+import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER } from '../opsFormClasses';
 
 interface CreateGrowCycleModalProps {
   isOpen: boolean;
@@ -151,7 +152,7 @@ export function CreateGrowCycleModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-4">
+        <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-4">
           <div>
             <label className="block text-sm text-white/70 mb-2">Cycle Name *</label>
             <input
@@ -165,34 +166,37 @@ export function CreateGrowCycleModal({
 
           <div>
             <label className="block text-sm text-white/70 mb-2">Crop Type *</label>
-            <select
-              value={cropType}
-              onChange={(e) => handleCropSelect(e.target.value)}
-              className={OPS_FORM_SELECT}
-            >
-              <option value="">Select a crop...</option>
-              <optgroup label="Herbs">
-                {CROP_OPTIONS.filter(c => c.value.includes('basil') || c.value.includes('cilantro') || c.value.includes('mint') || c.value.includes('parsley')).map(crop => (
-                  <option key={crop.value} value={crop.value}>
-                    {crop.label} (~{crop.growthDays} days)
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Leafy Greens">
-                {CROP_OPTIONS.filter(c => c.value.includes('lettuce') || c.value.includes('arugula') || c.value.includes('kale') || c.value.includes('spinach') || c.value.includes('chard')).map(crop => (
-                  <option key={crop.value} value={crop.value}>
-                    {crop.label} (~{crop.growthDays} days)
-                  </option>
-                ))}
-              </optgroup>
-              <optgroup label="Microgreens">
-                {CROP_OPTIONS.filter(c => c.value.includes('microgreens')).map(crop => (
-                  <option key={crop.value} value={crop.value}>
-                    {crop.label} (~{crop.growthDays} days)
-                  </option>
-                ))}
-              </optgroup>
-            </select>
+            <Select value={cropType || undefined} onValueChange={handleCropSelect}>
+              <SelectTrigger className={OPS_SELECT_TRIGGER}>
+                <SelectValue placeholder="Select a crop..." />
+              </SelectTrigger>
+              <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                <SelectGroup>
+                  <SelectLabel className="text-white/40">Herbs</SelectLabel>
+                  {CROP_OPTIONS.filter(c => c.value.includes('basil') || c.value.includes('cilantro') || c.value.includes('mint') || c.value.includes('parsley')).map(crop => (
+                    <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
+                      {crop.label} (~{crop.growthDays} days)
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel className="text-white/40">Leafy Greens</SelectLabel>
+                  {CROP_OPTIONS.filter(c => c.value.includes('lettuce') || c.value.includes('arugula') || c.value.includes('kale') || c.value.includes('spinach') || c.value.includes('chard')).map(crop => (
+                    <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
+                      {crop.label} (~{crop.growthDays} days)
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+                <SelectGroup>
+                  <SelectLabel className="text-white/40">Microgreens</SelectLabel>
+                  {CROP_OPTIONS.filter(c => c.value.includes('microgreens')).map(crop => (
+                    <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
+                      {crop.label} (~{crop.growthDays} days)
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">

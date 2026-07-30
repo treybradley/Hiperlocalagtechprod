@@ -3,8 +3,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Plus, X } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
-import { useFarmConfig, SystemType } from '../contexts/FarmConfigContext';
-import { CROPS, CROP_CATEGORY_STYLES, SYSTEM_TYPE_LABELS } from '../data/crops';
+import { useFarmConfig } from '../contexts/FarmConfigContext';
+import { CROPS, CROP_CATEGORY_STYLES, SYSTEM_TYPES, SYSTEM_TYPE_LABELS, type SystemType } from '../data/crops';
 
 interface ConfiguratorSectionProps {
   isActive: boolean;
@@ -13,8 +13,6 @@ interface ConfiguratorSectionProps {
   onPrevSlide?: () => void;
   isFirstSlide?: boolean;
 }
-
-const SYSTEM_TYPES: SystemType[] = ['nft', 'dwc', 'ebb-flow', 'drip', 'aeroponics', 'microgreens'];
 
 function SmallNumberInput({ value, onChange, min = 1, step = 1 }: {
   value: number; onChange: (v: number) => void; min?: number; step?: number;
@@ -48,7 +46,7 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
       </div>
 
       <div className={`relative h-full max-w-7xl mx-auto px-4 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex flex-col gap-4 h-full overflow-y-auto pb-24 pt-24">
+        <div className="flex flex-col gap-4 h-full overflow-y-auto hiper-scroll pb-24 pt-24 px-1">
 
           {/* Header */}
           <div className="flex-shrink-0">
@@ -96,7 +94,10 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
                       <SelectTrigger className="bg-white/5 border-white/15 text-white w-auto min-w-[150px] text-sm shrink-0">
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent
+                        className="bg-[#141414] border-white/15 text-white"
+                        collisionPadding={{ bottom: 96, top: 16 }}
+                      >
                         {SYSTEM_TYPES.map(st => (
                           <SelectItem key={st} value={st}>{SYSTEM_TYPE_LABELS[st]}</SelectItem>
                         ))}
@@ -217,7 +218,10 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
                 <SelectTrigger className="bg-white/5 border-white/20 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent
+                  className="bg-[#141414] border-white/15 text-white"
+                  collisionPadding={{ bottom: 96, top: 16 }}
+                >
                   <SelectItem value="open-air">{t('configurator.openAir')}</SelectItem>
                   <SelectItem value="climate-controlled">{t('configurator.climateControlled')}</SelectItem>
                 </SelectContent>
@@ -243,7 +247,11 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
                 <SelectTrigger className="bg-white/5 border-white/20 text-white">
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent
+                  side="top"
+                  className="bg-[#141414] border-white/15 text-white"
+                  collisionPadding={{ bottom: 96, top: 16 }}
+                >
                   <SelectItem value="manual">{t('configurator.manual')}</SelectItem>
                   <SelectItem value="semi-auto">{t('configurator.semiAuto')}</SelectItem>
                   <SelectItem value="full-auto">{t('configurator.fullAuto')}</SelectItem>

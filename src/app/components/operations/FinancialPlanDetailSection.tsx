@@ -215,7 +215,7 @@ export function FinancialPlanDetailSection({
       </div>
 
       <div className="relative h-full max-w-7xl mx-auto px-4 py-8 md:py-12 pt-20 md:pt-24">
-        <div className="flex flex-col h-full gap-6 overflow-y-auto pl-0 pr-0 pt-[21px] pb-[96px]">
+        <div className="flex flex-col h-full gap-6 overflow-y-auto hiper-scroll px-1 pt-[21px] pb-[96px]">
 
           <button
             onClick={onBack}

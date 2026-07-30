@@ -2,7 +2,13 @@ import { useState } from 'react';
 import { X, ChevronRight, ChevronLeft, Plus, Trash2 } from 'lucide-react';
 import { createSystem } from '../../../../storage/operations/systems';
 import { HydroponicSystem } from '../../../../storage/models';
-import { OPS_FORM_SELECT, OPS_FORM_SELECT_SM } from '../opsFormClasses';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import {
+  SYSTEM_TYPES,
+  SYSTEM_TYPE_FULL_LABELS,
+  type SystemType,
+} from '../../../data/crops';
+import { OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER, OPS_SELECT_TRIGGER_SM } from '../opsFormClasses';
 
 interface CreateSystemModalProps {
   isOpen: boolean;
@@ -10,7 +16,6 @@ interface CreateSystemModalProps {
   onSuccess: (system: HydroponicSystem) => void;
 }
 
-type SystemType = 'nft' | 'dwc' | 'ebb-flow' | 'drip' | 'aeroponics';
 type EquipmentCategory = 'lighting' | 'pumps' | 'nutrients' | 'seeds' | 'structure' | 'sensors' | 'other';
 type RecurringCostCategory = 'utilities' | 'nutrients' | 'maintenance' | 'labor' | 'other';
 
@@ -214,7 +219,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-200px)]">
           {/* Step 1: Basic Configuration */}
           {step === 1 && (
             <div className="space-y-4">
@@ -231,17 +236,18 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
 
               <div>
                 <label className="block text-sm text-white/70 mb-2">System Type *</label>
-                <select
-                  value={systemType}
-                  onChange={(e) => setSystemType(e.target.value as SystemType)}
-                  className={OPS_FORM_SELECT}
-                >
-                  <option value="nft">NFT (Nutrient Film Technique)</option>
-                  <option value="dwc">DWC (Deep Water Culture)</option>
-                  <option value="ebb-flow">Ebb & Flow</option>
-                  <option value="drip">Drip System</option>
-                  <option value="aeroponics">Aeroponics</option>
-                </select>
+                <Select value={systemType} onValueChange={v => setSystemType(v as SystemType)}>
+                  <SelectTrigger className={OPS_SELECT_TRIGGER}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                    {SYSTEM_TYPES.map(st => (
+                      <SelectItem key={st} value={st} className={OPS_SELECT_ITEM}>
+                        {SYSTEM_TYPE_FULL_LABELS[st]}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="grid grid-cols-3 gap-4">
@@ -279,7 +285,8 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Channels *</label>
+                  <label className="block text-sm text-white/70 mb-2">Units *</label>
+                  <p className="text-xs text-white/40 mb-2">Pots, channels, trays, or beds</p>
                   <input
                     type="number"
                     value={channels}
@@ -289,7 +296,8 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Plants per Channel *</label>
+                  <label className="block text-sm text-white/70 mb-2">Plants per unit *</label>
+                  <p className="text-xs text-white/40 mb-2">Matches Design Your Farm</p>
                   <input
                     type="number"
                     value={plantsPerChannel}
@@ -434,19 +442,23 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                           placeholder="Item name"
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
-                        <select
+                        <Select
                           value={item.category}
-                          onChange={(e) => updateEquipment(item.id, { category: e.target.value as EquipmentCategory })}
-                          className={OPS_FORM_SELECT_SM}
+                          onValueChange={v => updateEquipment(item.id, { category: v as EquipmentCategory })}
                         >
-                          <option value="lighting">Lighting</option>
-                          <option value="pumps">Pumps</option>
-                          <option value="nutrients">Nutrients</option>
-                          <option value="seeds">Seeds</option>
-                          <option value="structure">Structure</option>
-                          <option value="sensors">Sensors</option>
-                          <option value="other">Other</option>
-                        </select>
+                          <SelectTrigger className={OPS_SELECT_TRIGGER_SM}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                            <SelectItem value="lighting" className={OPS_SELECT_ITEM}>Lighting</SelectItem>
+                            <SelectItem value="pumps" className={OPS_SELECT_ITEM}>Pumps</SelectItem>
+                            <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
+                            <SelectItem value="seeds" className={OPS_SELECT_ITEM}>Seeds</SelectItem>
+                            <SelectItem value="structure" className={OPS_SELECT_ITEM}>Structure</SelectItem>
+                            <SelectItem value="sensors" className={OPS_SELECT_ITEM}>Sensors</SelectItem>
+                            <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </div>
                       <div className="grid grid-cols-3 gap-2">
                         <input
@@ -505,17 +517,21 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                           placeholder="Cost name"
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
-                        <select
+                        <Select
                           value={cost.category}
-                          onChange={(e) => updateRecurringCost(cost.id, { category: e.target.value as RecurringCostCategory })}
-                          className={OPS_FORM_SELECT_SM}
+                          onValueChange={v => updateRecurringCost(cost.id, { category: v as RecurringCostCategory })}
                         >
-                          <option value="utilities">Utilities</option>
-                          <option value="nutrients">Nutrients</option>
-                          <option value="maintenance">Maintenance</option>
-                          <option value="labor">Labor</option>
-                          <option value="other">Other</option>
-                        </select>
+                          <SelectTrigger className={OPS_SELECT_TRIGGER_SM}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                            <SelectItem value="utilities" className={OPS_SELECT_ITEM}>Utilities</SelectItem>
+                            <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
+                            <SelectItem value="maintenance" className={OPS_SELECT_ITEM}>Maintenance</SelectItem>
+                            <SelectItem value="labor" className={OPS_SELECT_ITEM}>Labor</SelectItem>
+                            <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                          </SelectContent>
+                        </Select>
                         <input
                           type="number"
                           value={cost.amount || ''}
@@ -524,14 +540,18 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
                         <div className="flex gap-2">
-                          <select
+                          <Select
                             value={cost.frequency}
-                            onChange={(e) => updateRecurringCost(cost.id, { frequency: e.target.value as 'monthly' | 'yearly' })}
-                            className={`flex-1 ${OPS_FORM_SELECT_SM}`}
+                            onValueChange={v => updateRecurringCost(cost.id, { frequency: v as 'monthly' | 'yearly' })}
                           >
-                            <option value="monthly">/ mo</option>
-                            <option value="yearly">/ yr</option>
-                          </select>
+                            <SelectTrigger className={`flex-1 ${OPS_SELECT_TRIGGER_SM}`}>
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
+                              <SelectItem value="monthly" className={OPS_SELECT_ITEM}>/ mo</SelectItem>
+                              <SelectItem value="yearly" className={OPS_SELECT_ITEM}>/ yr</SelectItem>
+                            </SelectContent>
+                          </Select>
                           <button
                             onClick={() => removeRecurringCost(cost.id)}
                             className="text-white/40 hover:text-red-400"

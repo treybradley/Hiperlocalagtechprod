@@ -144,7 +144,7 @@ export function RecordHarvestModal({
         </div>
 
         {/* Content */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-4">
+        <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-4">
           {/* Harvest Data */}
           <div className="grid grid-cols-2 gap-4">
             <div>

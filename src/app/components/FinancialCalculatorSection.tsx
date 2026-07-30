@@ -237,7 +237,7 @@ export function FinancialCalculatorSection({
         <div className="flex flex-col sm:flex-row h-full gap-6 overflow-hidden">
 
           {/* LEFT: Inputs */}
-          <div className="flex-1 overflow-y-auto space-y-4 pt-[81px] pb-24">
+          <div className="flex-1 overflow-y-auto hiper-scroll space-y-4 pt-[81px] pb-24 px-1">
             <div className="pb-2">
               <h2 className="text-white font-thin tracking-tight text-3xl pt-3">
                 Financial Model
@@ -473,7 +473,7 @@ export function FinancialCalculatorSection({
           </div>
 
           {/* RIGHT: Results (desktop) */}
-          <div className="hidden sm:flex w-80 flex-col gap-4 overflow-y-auto pt-6 pb-24">
+          <div className="hidden sm:flex w-80 flex-col gap-4 overflow-y-auto hiper-scroll pt-6 pb-24 px-1">
             <ResultsContent calc={calc} profitColor={profitColor} profitBg={profitBg} fmt={fmt} />
           </div>
 

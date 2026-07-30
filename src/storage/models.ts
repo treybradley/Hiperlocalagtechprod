@@ -1,5 +1,9 @@
 // Core data models for HydroponicOps system
 
+import type { SystemType } from '../app/data/crops';
+
+export type { SystemType };
+
 export interface HydroponicSystem {
   id: string;
   name: string;
@@ -7,15 +11,16 @@ export interface HydroponicSystem {
   updatedAt: number;
 
   // Configuration
-  systemType: 'nft' | 'dwc' | 'ebb-flow' | 'drip' | 'aeroponics';
+  systemType: SystemType;
   dimensions: {
     length: number;
     width: number;
     height: number;
   };
+  /** units ≈ pots/channels/trays; plantsPerUnit aligns with Design Your Farm */
   capacity: {
-    channels: number;
-    plantsPerChannel: number;
+    channels: number; // units (kept key for stored data compatibility)
+    plantsPerChannel: number; // plants per unit
     totalPlants: number;
   };
   location: string;

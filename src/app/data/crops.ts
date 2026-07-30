@@ -29,11 +29,43 @@ export const CROP_CATEGORY_STYLES: Record<string, string> = {
   microgreen: 'bg-amber-500/20 text-amber-400 border-amber-500/30',
 };
 
-export const SYSTEM_TYPE_LABELS: Record<string, string> = {
+/** Shared system type — used by Design Your Farm and Operations */
+export type SystemType =
+  | 'nft'
+  | 'dwc'
+  | 'ebb-flow'
+  | 'drip'
+  | 'aeroponics'
+  | 'microgreens'
+  | 'soil';
+
+export const SYSTEM_TYPES: SystemType[] = [
+  'nft',
+  'dwc',
+  'ebb-flow',
+  'drip',
+  'aeroponics',
+  'microgreens',
+  'soil',
+];
+
+export const SYSTEM_TYPE_LABELS: Record<SystemType, string> = {
   nft:         'NFT',
   dwc:         'DWC',
   'ebb-flow':  'Ebb & Flow',
   drip:        'Drip',
   aeroponics:  'Aeroponics',
   microgreens: 'Microgreens Trays',
+  soil:        'Soil',
+};
+
+/** Longer labels for forms / selects */
+export const SYSTEM_TYPE_FULL_LABELS: Record<SystemType, string> = {
+  nft:         'NFT (Nutrient Film Technique)',
+  dwc:         'DWC (Deep Water Culture)',
+  'ebb-flow':  'Ebb & Flow',
+  drip:        'Drip System',
+  aeroponics:  'Aeroponics',
+  microgreens: 'Microgreens Trays',
+  soil:        'Soil',
 };

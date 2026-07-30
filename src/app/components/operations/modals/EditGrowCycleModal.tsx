@@ -3,7 +3,8 @@ import { X } from 'lucide-react';
 import { updateGrowCycle } from '../../../../storage/operations/growCycles';
 import { GrowCycle } from '../../../../storage/models';
 import { parseLocalDateString, toLocalDateInputValue } from '../../../../storage/utils/dateHelpers';
-import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_FORM_SELECT } from '../opsFormClasses';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER } from '../opsFormClasses';
 
 interface EditGrowCycleModalProps {
   isOpen: boolean;
@@ -110,7 +111,7 @@ export function EditGrowCycleModal({
           </button>
         </div>
 
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-180px)] space-y-4">
+        <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-4">
           <div>
             <label className="block text-sm text-white/70 mb-2">Cycle Name *</label>
             <input
@@ -123,19 +124,21 @@ export function EditGrowCycleModal({
 
           <div>
             <label className="block text-sm text-white/70 mb-2">Crop Type *</label>
-            <select
-              value={cropType}
-              onChange={(e) => setCropType(e.target.value)}
-              className={OPS_FORM_SELECT}
-            >
-              <option value="">Select a crop...</option>
-              {CROP_OPTIONS.map((crop) => (
-                <option key={crop.value} value={crop.value}>{crop.label}</option>
-              ))}
-              {!CROP_OPTIONS.some((c) => c.value === cropType) && cropType && (
-                <option value={cropType}>{cropType}</option>
-              )}
-            </select>
+            <Select value={cropType || undefined} onValueChange={setCropType}>
+              <SelectTrigger className={OPS_SELECT_TRIGGER}>
+                <SelectValue placeholder="Select a crop..." />
+              </SelectTrigger>
+              <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                {CROP_OPTIONS.map((crop) => (
+                  <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
+                    {crop.label}
+                  </SelectItem>
+                ))}
+                {!CROP_OPTIONS.some((c) => c.value === cropType) && cropType && (
+                  <SelectItem value={cropType} className={OPS_SELECT_ITEM}>{cropType}</SelectItem>
+                )}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -183,29 +186,39 @@ export function EditGrowCycleModal({
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-white/70 mb-2">Current Stage</label>
-              <select
+              <Select
                 value={currentStage}
-                onChange={(e) => setCurrentStage(e.target.value as GrowCycle['currentStage'])}
-                className={OPS_FORM_SELECT}
+                onValueChange={v => setCurrentStage(v as GrowCycle['currentStage'])}
               >
-                {STAGE_OPTIONS.map((stage) => (
-                  <option key={stage} value={stage}>
-                    {stage.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
-                  </option>
-                ))}
-              </select>
+                <SelectTrigger className={OPS_SELECT_TRIGGER}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
+                  {STAGE_OPTIONS.map((stage) => (
+                    <SelectItem key={stage} value={stage} className={OPS_SELECT_ITEM}>
+                      {stage.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div>
               <label className="block text-sm text-white/70 mb-2">Status</label>
-              <select
+              <Select
                 value={status}
-                onChange={(e) => setStatus(e.target.value as GrowCycle['status'])}
-                className={OPS_FORM_SELECT}
+                onValueChange={v => setStatus(v as GrowCycle['status'])}
               >
-                {STATUS_OPTIONS.map((s) => (
-                  <option key={s} value={s} className="capitalize">{s}</option>
-                ))}
-              </select>
+                <SelectTrigger className={OPS_SELECT_TRIGGER}>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
+                  {STATUS_OPTIONS.map((s) => (
+                    <SelectItem key={s} value={s} className={`${OPS_SELECT_ITEM} capitalize`}>
+                      {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </div>

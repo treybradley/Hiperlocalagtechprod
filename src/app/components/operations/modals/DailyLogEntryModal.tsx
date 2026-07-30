@@ -14,7 +14,8 @@ import {
   toLocalDateInputValue,
   todayLocalDateInputValue,
 } from '../../../../storage/utils/dateHelpers';
-import { OPS_FORM_DATE, OPS_FORM_SELECT_SM } from '../opsFormClasses';
+import { OPS_FORM_DATE, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER_SM } from '../opsFormClasses';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 
 interface DailyLogEntryModalProps {
   isOpen: boolean;
@@ -324,7 +325,7 @@ export function DailyLogEntryModal({
         </div>
 
         {/* Content */}
-        <div className="p-[18px] overflow-y-auto max-h-[calc(90vh-180px)] space-y-6">
+        <div className="p-[18px] overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-6">
           {/* Date */}
           <div>
             <label className="block text-sm text-white/70 mb-2">Log Date</label>
@@ -533,15 +534,19 @@ export function DailyLogEntryModal({
               {issues.map((issue, index) => (
                 <div key={index} className="bg-white/5 border border-white/10 rounded-lg p-3 space-y-2">
                   <div className="flex gap-2">
-                    <select
+                    <Select
                       value={issue.severity}
-                      onChange={(e) => updateIssue(index, { severity: e.target.value as IssueSeverity })}
-                      className={OPS_FORM_SELECT_SM}
+                      onValueChange={v => updateIssue(index, { severity: v as IssueSeverity })}
                     >
-                      <option value="low">Low</option>
-                      <option value="medium">Medium</option>
-                      <option value="high">High</option>
-                    </select>
+                      <SelectTrigger className={`w-[110px] shrink-0 ${OPS_SELECT_TRIGGER_SM}`}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                        <SelectItem value="low" className={OPS_SELECT_ITEM}>Low</SelectItem>
+                        <SelectItem value="medium" className={OPS_SELECT_ITEM}>Medium</SelectItem>
+                        <SelectItem value="high" className={OPS_SELECT_ITEM}>High</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <input
                       type="text"
                       value={issue.description}

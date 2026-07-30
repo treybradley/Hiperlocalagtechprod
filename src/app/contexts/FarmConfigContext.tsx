@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { CROPS } from '../data/crops';
+import { CROPS, type SystemType } from '../data/crops';
 
-export type SystemType = 'nft' | 'dwc' | 'ebb-flow' | 'drip' | 'aeroponics' | 'microgreens';
+export type { SystemType };
 type Environment = 'open-air' | 'climate-controlled';
 type AutomationLevel = 'manual' | 'semi-auto' | 'full-auto';
 
