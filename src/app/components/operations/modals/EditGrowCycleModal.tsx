@@ -5,6 +5,7 @@ import { GrowCycle } from '../../../../storage/models';
 import { parseLocalDateString, toLocalDateInputValue } from '../../../../storage/utils/dateHelpers';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER } from '../opsFormClasses';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface EditGrowCycleModalProps {
   isOpen: boolean;
@@ -47,6 +48,7 @@ export function EditGrowCycleModal({
   onClose,
   onSuccess,
 }: EditGrowCycleModalProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [cropType, setCropType] = useState('');
   const [seedDate, setSeedDate] = useState('');
@@ -92,7 +94,7 @@ export function EditGrowCycleModal({
       onClose();
     } catch (error) {
       console.error('Failed to update grow cycle:', error);
-      alert('Failed to update grow cycle. Please try again.');
+      alert(t('operations.editCycle.failed'));
     } finally {
       setSaving(false);
     }
@@ -103,8 +105,8 @@ export function EditGrowCycleModal({
       <div className="relative bg-[#0a0a0a] border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div>
-            <h2 className="text-2xl text-white">Edit Grow Cycle</h2>
-            <p className="text-sm text-white/60 mt-1">Update cycle details, stage, and status</p>
+            <h2 className="text-2xl text-white">{t('operations.editCycle.title')}</h2>
+            <p className="text-sm text-white/60 mt-1">{t('operations.editCycle.subtitle')}</p>
           </div>
           <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
             <X className="w-6 h-6" />
@@ -113,7 +115,7 @@ export function EditGrowCycleModal({
 
         <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-4">
           <div>
-            <label className="block text-sm text-white/70 mb-2">Cycle Name *</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cycleName')}</label>
             <input
               type="text"
               value={name}
@@ -123,10 +125,10 @@ export function EditGrowCycleModal({
           </div>
 
           <div>
-            <label className="block text-sm text-white/70 mb-2">Crop Type *</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cropType')}</label>
             <Select value={cropType || undefined} onValueChange={setCropType}>
               <SelectTrigger className={OPS_SELECT_TRIGGER}>
-                <SelectValue placeholder="Select a crop..." />
+                <SelectValue placeholder={t('operations.createCycle.selectCrop')} />
               </SelectTrigger>
               <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
                 {CROP_OPTIONS.map((crop) => (
@@ -143,7 +145,7 @@ export function EditGrowCycleModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/70 mb-2">Seed Date *</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.seedDate')}</label>
               <input
                 type="date"
                 value={seedDate}
@@ -152,7 +154,7 @@ export function EditGrowCycleModal({
               />
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-2">Harvest Date</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.harvestDate')}</label>
               <input
                 type="date"
                 value={harvestDate}
@@ -164,7 +166,7 @@ export function EditGrowCycleModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/70 mb-2">Initial Plant Count *</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.initialPlantCount')}</label>
               <input
                 type="number"
                 value={initialPlantCount}
@@ -173,7 +175,7 @@ export function EditGrowCycleModal({
               />
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-2">Current Plant Count *</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.currentPlantCount')}</label>
               <input
                 type="number"
                 value={currentPlantCount}
@@ -185,7 +187,7 @@ export function EditGrowCycleModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/70 mb-2">Current Stage</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.currentStage')}</label>
               <Select
                 value={currentStage}
                 onValueChange={v => setCurrentStage(v as GrowCycle['currentStage'])}
@@ -196,14 +198,14 @@ export function EditGrowCycleModal({
                 <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
                   {STAGE_OPTIONS.map((stage) => (
                     <SelectItem key={stage} value={stage} className={OPS_SELECT_ITEM}>
-                      {stage.replace(/([A-Z])/g, ' $1').replace(/^./, (s) => s.toUpperCase())}
+                      {t(`stages.${stage}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-2">Status</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.status')}</label>
               <Select
                 value={status}
                 onValueChange={v => setStatus(v as GrowCycle['status'])}
@@ -214,7 +216,7 @@ export function EditGrowCycleModal({
                 <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
                   {STATUS_OPTIONS.map((s) => (
                     <SelectItem key={s} value={s} className={`${OPS_SELECT_ITEM} capitalize`}>
-                      {s}
+                      {t(`status.${s}`)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -225,7 +227,7 @@ export function EditGrowCycleModal({
 
         <div className="flex items-center justify-between p-6 border-t border-white/10">
           <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
-            Cancel
+            {t('common.cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -234,7 +236,7 @@ export function EditGrowCycleModal({
               !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {saving ? 'Saving...' : 'Save Changes'}
+            {saving ? t('operations.editCycle.saving') : t('operations.editCycle.save')}
           </button>
         </div>
       </div>

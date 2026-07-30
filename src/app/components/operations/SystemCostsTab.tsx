@@ -5,6 +5,7 @@ import { updateSystem } from '../../../storage/operations/systems';
 import { ConfirmDialog } from './modals/ConfirmDialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER_SM } from './opsFormClasses';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SystemCostsTabProps {
   system: HydroponicSystem;
@@ -15,6 +16,7 @@ type EquipmentCategory = 'lighting' | 'pumps' | 'nutrients' | 'seeds' | 'structu
 type RecurringCategory = 'utilities' | 'nutrients' | 'maintenance' | 'labor' | 'other';
 
 export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
+  const { t } = useLanguage();
   const [showAddEquipment, setShowAddEquipment] = useState(false);
   const [showAddRecurring, setShowAddRecurring] = useState(false);
   const [editingEquipmentId, setEditingEquipmentId] = useState<string | null>(null);
@@ -191,26 +193,26 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
         <div className="bg-gradient-to-br from-green-500/10 to-green-500/5 backdrop-blur-sm border border-green-500/30 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-2">
             <DollarSign className="w-5 h-5 text-green-400" />
-            <span className="text-sm text-white/60">Total Capital Cost</span>
+            <span className="text-sm text-white/60">{t('operations.costs.totalCapital')}</span>
           </div>
           <div className="text-3xl text-white font-medium">
             ${system.operatingCosts.totalCapitalCost.toLocaleString()}
           </div>
           <div className="text-xs text-white/40 mt-1">
-            {system.operatingCosts.equipment.length} equipment items
+            {system.operatingCosts.equipment.length} {t('operations.costs.equipmentItems')}
           </div>
         </div>
 
         <div className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 backdrop-blur-sm border border-blue-500/30 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-2">
             <Calendar className="w-5 h-5 text-blue-400" />
-            <span className="text-sm text-white/60">Monthly Operating Cost</span>
+            <span className="text-sm text-white/60">{t('operations.costs.monthlyOperating')}</span>
           </div>
           <div className="text-3xl text-white font-medium">
             ${system.operatingCosts.monthlyOperatingCost.toFixed(2)}
           </div>
           <div className="text-xs text-white/40 mt-1">
-            {system.operatingCosts.recurringCosts.length} recurring costs
+            {system.operatingCosts.recurringCosts.length} {t('operations.costs.recurringCostsCount')}
           </div>
         </div>
       </div>
@@ -218,7 +220,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
       {/* Equipment */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl text-white">Equipment</h3>
+          <h3 className="text-xl text-white">{t('operations.costs.equipment')}</h3>
           <button
             onClick={() => {
               if (showAddEquipment && !editingEquipmentId) {
@@ -231,7 +233,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
             className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all"
           >
             <Plus className="w-4 h-4" />
-            Add Equipment
+            {t('operations.costs.addEquipment')}
           </button>
         </div>
 
@@ -243,7 +245,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 type="text"
                 value={equipName}
                 onChange={(e) => setEquipName(e.target.value)}
-                placeholder="Item name"
+                placeholder={t('operations.costs.itemName')}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
               <Select
@@ -254,13 +256,13 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
-                  <SelectItem value="lighting" className={OPS_SELECT_ITEM}>Lighting</SelectItem>
-                  <SelectItem value="pumps" className={OPS_SELECT_ITEM}>Pumps</SelectItem>
-                  <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
-                  <SelectItem value="seeds" className={OPS_SELECT_ITEM}>Seeds</SelectItem>
-                  <SelectItem value="structure" className={OPS_SELECT_ITEM}>Structure</SelectItem>
-                  <SelectItem value="sensors" className={OPS_SELECT_ITEM}>Sensors</SelectItem>
-                  <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                  <SelectItem value="lighting" className={OPS_SELECT_ITEM}>{t('equipmentCategory.lighting')}</SelectItem>
+                  <SelectItem value="pumps" className={OPS_SELECT_ITEM}>{t('equipmentCategory.pumps')}</SelectItem>
+                  <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>{t('equipmentCategory.nutrients')}</SelectItem>
+                  <SelectItem value="seeds" className={OPS_SELECT_ITEM}>{t('equipmentCategory.seeds')}</SelectItem>
+                  <SelectItem value="structure" className={OPS_SELECT_ITEM}>{t('equipmentCategory.structure')}</SelectItem>
+                  <SelectItem value="sensors" className={OPS_SELECT_ITEM}>{t('equipmentCategory.sensors')}</SelectItem>
+                  <SelectItem value="other" className={OPS_SELECT_ITEM}>{t('equipmentCategory.other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -269,21 +271,21 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 type="number"
                 value={equipCost}
                 onChange={(e) => setEquipCost(e.target.value)}
-                placeholder="Cost (USD)"
+                placeholder={t('operations.costs.costUsd')}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
               <input
                 type="number"
                 value={equipQuantity}
                 onChange={(e) => setEquipQuantity(e.target.value)}
-                placeholder="Quantity"
+                placeholder={t('operations.costs.quantity')}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
               <input
                 type="text"
                 value={equipVendor}
                 onChange={(e) => setEquipVendor(e.target.value)}
-                placeholder="Vendor"
+                placeholder={t('operations.costs.vendor')}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
             </div>
@@ -291,7 +293,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
               type="text"
               value={equipLink}
               onChange={(e) => setEquipLink(e.target.value)}
-              placeholder="Purchase link (optional)"
+              placeholder={t('operations.costs.purchaseLink')}
               className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
             />
             <div className="flex gap-2">
@@ -300,13 +302,13 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 disabled={!equipName || !equipCost}
                 className="flex-1 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all disabled:opacity-50"
               >
-                {editingEquipmentId ? 'Save Changes' : 'Add'}
+                {editingEquipmentId ? t('operations.costs.saveChanges') : t('common.add')}
               </button>
               <button
                 onClick={resetEquipmentForm}
                 className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -318,11 +320,11 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
             <table className="w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">Item</th>
-                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">Category</th>
-                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">Cost</th>
-                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">Qty</th>
-                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">Total</th>
+                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.item')}</th>
+                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.category')}</th>
+                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.cost')}</th>
+                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.qty')}</th>
+                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.total')}</th>
                   <th className="text-right text-xs text-white/60 font-medium px-4 py-3"></th>
                 </tr>
               </thead>
@@ -341,12 +343,12 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                           rel="noopener noreferrer"
                           className="text-xs text-green-400 hover:text-green-300 inline-flex items-center gap-1 mt-1"
                         >
-                          View Link <ExternalLink className="w-3 h-3" />
+                          {t('common.viewLink')} <ExternalLink className="w-3 h-3" />
                         </a>
                       )}
                     </td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-white/60 capitalize">{item.category}</span>
+                      <span className="text-xs text-white/60 capitalize">{t(`equipmentCategory.${item.category}`)}</span>
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-white">
                       ${item.cost.toLocaleString()}
@@ -362,14 +364,14 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                         <button
                           onClick={() => startEditEquipment(item)}
                           className="text-white/40 hover:text-white transition-colors"
-                          title="Edit"
+                          title={t('common.edit')}
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setPendingDeleteEquipmentId(item.id)}
                           className="text-white/40 hover:text-red-400 transition-colors"
-                          title="Delete"
+                          title={t('common.delete')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -382,7 +384,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
           </div>
         ) : (
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/60">No equipment added yet</p>
+            <p className="text-white/60">{t('operations.costs.noEquipment')}</p>
           </div>
         )}
       </div>
@@ -390,7 +392,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
       {/* Recurring Costs */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl text-white">Recurring Costs</h3>
+          <h3 className="text-xl text-white">{t('operations.costs.recurringCosts')}</h3>
           <button
             onClick={() => {
               if (showAddRecurring && !editingRecurringId) {
@@ -403,7 +405,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
             className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all"
           >
             <Plus className="w-4 h-4" />
-            Add Cost
+            {t('operations.costs.addCost')}
           </button>
         </div>
 
@@ -415,7 +417,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 type="text"
                 value={recurringName}
                 onChange={(e) => setRecurringName(e.target.value)}
-                placeholder="Cost name"
+                placeholder={t('operations.costs.costName')}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
               <Select
@@ -426,11 +428,11 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
-                  <SelectItem value="utilities" className={OPS_SELECT_ITEM}>Utilities</SelectItem>
-                  <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
-                  <SelectItem value="maintenance" className={OPS_SELECT_ITEM}>Maintenance</SelectItem>
-                  <SelectItem value="labor" className={OPS_SELECT_ITEM}>Labor</SelectItem>
-                  <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                  <SelectItem value="utilities" className={OPS_SELECT_ITEM}>{t('recurringCategory.utilities')}</SelectItem>
+                  <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>{t('recurringCategory.nutrients')}</SelectItem>
+                  <SelectItem value="maintenance" className={OPS_SELECT_ITEM}>{t('recurringCategory.maintenance')}</SelectItem>
+                  <SelectItem value="labor" className={OPS_SELECT_ITEM}>{t('recurringCategory.labor')}</SelectItem>
+                  <SelectItem value="other" className={OPS_SELECT_ITEM}>{t('recurringCategory.other')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -439,7 +441,7 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 type="number"
                 value={recurringAmount}
                 onChange={(e) => setRecurringAmount(e.target.value)}
-                placeholder="Amount (USD)"
+                placeholder={t('operations.costs.amountUsd')}
                 className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
               />
               <Select
@@ -450,8 +452,8 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
-                  <SelectItem value="monthly" className={OPS_SELECT_ITEM}>Monthly</SelectItem>
-                  <SelectItem value="yearly" className={OPS_SELECT_ITEM}>Yearly</SelectItem>
+                  <SelectItem value="monthly" className={OPS_SELECT_ITEM}>{t('frequency.monthly')}</SelectItem>
+                  <SelectItem value="yearly" className={OPS_SELECT_ITEM}>{t('frequency.yearly')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -461,13 +463,13 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                 disabled={!recurringName || !recurringAmount}
                 className="flex-1 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all disabled:opacity-50"
               >
-                {editingRecurringId ? 'Save Changes' : 'Add'}
+                {editingRecurringId ? t('operations.costs.saveChanges') : t('common.add')}
               </button>
               <button
                 onClick={resetRecurringForm}
                 className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors"
               >
-                Cancel
+                {t('common.cancel')}
               </button>
             </div>
           </div>
@@ -479,11 +481,11 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
             <table className="w-full">
               <thead className="bg-white/5 border-b border-white/10">
                 <tr>
-                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">Cost</th>
-                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">Category</th>
-                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">Amount</th>
-                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">Frequency</th>
-                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">Monthly</th>
+                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.cost')}</th>
+                  <th className="text-left text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.category')}</th>
+                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.amount')}</th>
+                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.frequency')}</th>
+                  <th className="text-right text-xs text-white/60 font-medium px-4 py-3">{t('operations.costs.monthly')}</th>
                   <th className="text-right text-xs text-white/60 font-medium px-4 py-3"></th>
                 </tr>
               </thead>
@@ -492,13 +494,13 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                   <tr key={cost.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
                     <td className="px-4 py-3 text-sm text-white">{cost.name}</td>
                     <td className="px-4 py-3">
-                      <span className="text-xs text-white/60 capitalize">{cost.category}</span>
+                      <span className="text-xs text-white/60 capitalize">{t(`recurringCategory.${cost.category}`)}</span>
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-white">
                       ${cost.amount.toLocaleString()}
                     </td>
                     <td className="px-4 py-3 text-right">
-                      <span className="text-xs text-white/60 capitalize">{cost.frequency}</span>
+                      <span className="text-xs text-white/60 capitalize">{t(`frequency.${cost.frequency}`)}</span>
                     </td>
                     <td className="px-4 py-3 text-right text-sm text-white font-medium">
                       ${(cost.frequency === 'monthly' ? cost.amount : cost.amount / 12).toFixed(2)}
@@ -508,14 +510,14 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
                         <button
                           onClick={() => startEditRecurring(cost)}
                           className="text-white/40 hover:text-white transition-colors"
-                          title="Edit"
+                          title={t('common.edit')}
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setPendingDeleteRecurringId(cost.id)}
                           className="text-white/40 hover:text-red-400 transition-colors"
-                          title="Delete"
+                          title={t('common.delete')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -528,16 +530,18 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
           </div>
         ) : (
           <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 text-center">
-            <p className="text-white/60">No recurring costs added yet</p>
+            <p className="text-white/60">{t('operations.costs.noRecurring')}</p>
           </div>
         )}
       </div>
 
       <ConfirmDialog
         isOpen={Boolean(pendingDeleteEquipmentId)}
-        title="Remove equipment?"
-        description={`Remove "${system.operatingCosts.equipment.find((e) => e.id === pendingDeleteEquipmentId)?.name ?? 'this item'}" from the equipment list?`}
-        confirmLabel="Remove"
+        title={t('operations.costs.removeEquipmentTitle')}
+        description={t('operations.costs.removeEquipmentBody', {
+          name: system.operatingCosts.equipment.find((e) => e.id === pendingDeleteEquipmentId)?.name ?? t('operations.costs.item'),
+        })}
+        confirmLabel={t('common.remove')}
         destructive
         loading={deleting}
         onConfirm={async () => {
@@ -554,9 +558,11 @@ export function SystemCostsTab({ system, onUpdate }: SystemCostsTabProps) {
 
       <ConfirmDialog
         isOpen={Boolean(pendingDeleteRecurringId)}
-        title="Remove recurring cost?"
-        description={`Remove "${system.operatingCosts.recurringCosts.find((c) => c.id === pendingDeleteRecurringId)?.name ?? 'this cost'}" from recurring costs?`}
-        confirmLabel="Remove"
+        title={t('operations.costs.removeRecurringTitle')}
+        description={t('operations.costs.removeRecurringBody', {
+          name: system.operatingCosts.recurringCosts.find((c) => c.id === pendingDeleteRecurringId)?.name ?? t('operations.costs.cost'),
+        })}
+        confirmLabel={t('common.remove')}
         destructive
         loading={deleting}
         onConfirm={async () => {

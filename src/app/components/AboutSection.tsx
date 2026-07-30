@@ -1,37 +1,55 @@
+import { useMemo } from 'react';
 import { Leaf, Droplets, Zap, TrendingUp, Users, Globe } from 'lucide-react';
+import { useLanguage } from '../contexts/LanguageContext';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 
-const pillars = [
-  {
-    icon: Leaf,
-    title: 'Zero-Distance Produce',
-    description: 'Grow food where it\'s consumed. Eliminate cold chains, cut spoilage, and serve ingredients harvested hours — not days — ago.',
-  },
-  {
-    icon: Droplets,
-    title: '95% Less Water',
-    description: 'Closed-loop hydroponics recirculates water continuously. A fraction of the input, the same output.',
-  },
-  {
-    icon: Zap,
-    title: 'Year-Round Consistency',
-    description: 'Controlled environments mean no seasonal gaps, no weather dependency, no supply uncertainty.',
-  },
-  {
-    icon: TrendingUp,
-    title: 'Measurable ROI',
-    description: 'Every gram harvested, every peso spent, every cycle logged. Real operational data driving real financial decisions.',
-  },
-];
-
-const timeline = [
-  { year: '2024', event: 'Concept & first prototype system built in La Veleta, Tulum' },
-  { year: '2025', event: 'First restaurant partner. 3 systems operational.' },
-  { year: '2026', event: 'Hiperlocal platform launched. Open to all growers.' },
-  { year: '2027', event: 'ESP32 hardware integration. Real-time monitoring goes live.' },
-];
-
 export function AboutSection() {
+  const { t } = useLanguage();
+
+  const pillars = useMemo(() => [
+    {
+      icon: Leaf,
+      title: t('about.pillar1Title'),
+      description: t('about.pillar1Desc'),
+    },
+    {
+      icon: Droplets,
+      title: t('about.pillar2Title'),
+      description: t('about.pillar2Desc'),
+    },
+    {
+      icon: Zap,
+      title: t('about.pillar3Title'),
+      description: t('about.pillar3Desc'),
+    },
+    {
+      icon: TrendingUp,
+      title: t('about.pillar4Title'),
+      description: t('about.pillar4Desc'),
+    },
+  ], [t]);
+
+  const timeline = useMemo(() => [
+    { year: '2024', event: t('about.timeline2024') },
+    { year: '2025', event: t('about.timeline2025') },
+    { year: '2026', event: t('about.timeline2026') },
+    { year: '2027', event: t('about.timeline2027') },
+  ], [t]);
+
+  const audience = useMemo(() => [
+    { icon: Leaf, label: t('about.homeLabel'), desc: t('about.homeDesc') },
+    { icon: Users, label: t('about.hospitalityLabel'), desc: t('about.hospitalityDesc') },
+    { icon: Globe, label: t('about.commercialLabel'), desc: t('about.commercialDesc') },
+  ], [t]);
+
+  const coming = useMemo(() => [
+    t('about.coming1'),
+    t('about.coming2'),
+    t('about.coming3'),
+    t('about.coming4'),
+    t('about.coming5'),
+  ], [t]);
+
   return (
     <div className="bg-[#0a0a0a] min-h-full">
       <div className="max-w-4xl mx-auto px-4 py-12 space-y-20">
@@ -39,11 +57,11 @@ export function AboutSection() {
         {/* Hero statement */}
         <div className="space-y-6">
           <h1 className="text-5xl md:text-6xl text-white tracking-tight leading-tight">
-            Farming built for<br />
-            <span className="text-green-400">where you live.</span>
+            {t('about.title1')}<br />
+            <span className="text-green-400">{t('about.title2')}</span>
           </h1>
           <p className="text-white/60 text-lg max-w-2xl leading-relaxed">
-            Hiperlocal is a platform for anyone who wants to grow food — in a restaurant kitchen, a hotel courtyard, a rooftop, or a spare room. We make it easy to design, track, and scale a hydroponic system using real data from your real operation.
+            {t('about.description')}
           </p>
         </div>
 
@@ -51,19 +69,19 @@ export function AboutSection() {
         <div className="relative h-72 md:h-96 rounded-3xl overflow-hidden">
           <ImageWithFallback
             src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=1200"
-            alt="Hydroponic farm"
+            alt={t('about.imageAlt')}
             className="w-full h-full object-cover"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0a] via-transparent to-transparent" />
           <div className="absolute bottom-6 left-6">
-            <div className="text-xs text-white/50 uppercase tracking-wider">Est. 2024</div>
-            <div className="text-white">La Veleta, Tulum, Q.Roo</div>
+            <div className="text-xs text-white/50 uppercase tracking-wider">{t('about.est')}</div>
+            <div className="text-white">{t('about.location')}</div>
           </div>
         </div>
 
         {/* Pillars */}
         <div>
-          <h2 className="text-2xl text-white mb-8">Why hyperlocal farming works</h2>
+          <h2 className="text-2xl text-white mb-8">{t('about.pillarsTitle')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
             {pillars.map(p => (
               <div key={p.title} className="bg-white/5 border border-white/10 rounded-2xl p-6 space-y-3">
@@ -79,7 +97,7 @@ export function AboutSection() {
 
         {/* Timeline */}
         <div>
-          <h2 className="text-2xl text-white mb-8">Story so far</h2>
+          <h2 className="text-2xl text-white mb-8">{t('about.storyTitle')}</h2>
           <div className="space-y-0">
             {timeline.map((item, i) => (
               <div key={item.year} className="flex gap-6">
@@ -98,13 +116,9 @@ export function AboutSection() {
 
         {/* Who it's for */}
         <div className="bg-gradient-to-br from-green-500/10 to-transparent border border-green-500/20 rounded-3xl p-8 space-y-6">
-          <h2 className="text-2xl text-white">Built for growers of all sizes</h2>
+          <h2 className="text-2xl text-white">{t('about.audienceTitle')}</h2>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            {[
-              { icon: Leaf, label: 'Home growers', desc: 'Track a single system. Understand your real costs and yields.' },
-              { icon: Users, label: 'Restaurant & hospitality', desc: 'Source hyperlocal produce. Control quality and supply consistency.' },
-              { icon: Globe, label: 'Commercial farms', desc: 'Manage multiple systems, cycles, and ROI across your entire operation.' },
-            ].map(item => (
+            {audience.map(item => (
               <div key={item.label} className="space-y-2">
                 <item.icon className="w-5 h-5 text-green-400" />
                 <div className="text-white text-sm">{item.label}</div>
@@ -116,9 +130,9 @@ export function AboutSection() {
 
         {/* Roadmap callout */}
         <div className="text-center space-y-4 pb-8">
-          <div className="text-white/40 text-sm uppercase tracking-wider">What's coming</div>
+          <div className="text-white/40 text-sm uppercase tracking-wider">{t('about.comingTitle')}</div>
           <div className="flex flex-wrap justify-center gap-3">
-            {['ESP32 hardware integration', 'Real-time sensor monitoring', 'Multi-farm accounts', 'Affiliate plant suppliers', 'Community grow logs'].map(item => (
+            {coming.map(item => (
               <span key={item} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-sm text-white/70">{item}</span>
             ))}
           </div>
@@ -128,4 +142,3 @@ export function AboutSection() {
     </div>
   );
 }
-

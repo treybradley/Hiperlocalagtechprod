@@ -9,6 +9,7 @@ import {
 } from '../../utils/financialPlanHelpers';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../ui/select';
 import { OPS_FORM_INPUT_SM, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER_SM } from './opsFormClasses';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const STARTUP_CATEGORIES = Object.keys(STARTUP_COST_CATEGORY_LABELS) as StartupCostCategory[];
 
@@ -29,6 +30,7 @@ function emptyFormState() {
 }
 
 export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps) {
+  const { t } = useLanguage();
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(emptyFormState);
@@ -83,7 +85,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-xs text-white/50">{items.length} item{items.length !== 1 ? 's' : ''}</span>
+        <span className="text-xs text-white/50">{items.length} {items.length !== 1 ? t('operations.startupEditor.items') : t('operations.startupEditor.item')}</span>
         <button
           type="button"
           onClick={() => {
@@ -97,7 +99,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
           className="flex items-center gap-1 text-xs text-amber-400 hover:text-amber-300 transition-colors"
         >
           <Plus className="w-3.5 h-3.5" />
-          Add item
+          {t('operations.startupEditor.addItem')}
         </button>
       </div>
 
@@ -108,7 +110,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
               type="text"
               value={form.name}
               onChange={e => setForm(prev => ({ ...prev, name: e.target.value }))}
-              placeholder="Item name"
+              placeholder={t('operations.startupEditor.itemName')}
               className={OPS_FORM_INPUT_SM}
             />
             <Select
@@ -121,7 +123,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
               <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
                 {STARTUP_CATEGORIES.map(cat => (
                   <SelectItem key={cat} value={cat} className={OPS_SELECT_ITEM}>
-                    {STARTUP_COST_CATEGORY_LABELS[cat]}
+                    {t(`equipmentCategory.${cat}`)}
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -132,7 +134,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
               type="number"
               value={form.cost}
               onChange={e => setForm(prev => ({ ...prev, cost: e.target.value }))}
-              placeholder="Unit cost (USD)"
+              placeholder={t('operations.startupEditor.unitCost')}
               min={0}
               className={OPS_FORM_INPUT_SM}
             />
@@ -140,7 +142,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
               type="number"
               value={form.quantity}
               onChange={e => setForm(prev => ({ ...prev, quantity: e.target.value }))}
-              placeholder="Qty"
+              placeholder={t('operations.startupEditor.qty')}
               min={1}
               className={OPS_FORM_INPUT_SM}
             />
@@ -149,14 +151,14 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
             type="text"
             value={form.vendor}
             onChange={e => setForm(prev => ({ ...prev, vendor: e.target.value }))}
-            placeholder="Vendor (optional)"
+            placeholder={t('operations.startupEditor.vendorOptional')}
             className={`w-full ${OPS_FORM_INPUT_SM}`}
           />
           <input
             type="url"
             value={form.purchaseLink}
             onChange={e => setForm(prev => ({ ...prev, purchaseLink: e.target.value }))}
-            placeholder="Purchase link (optional)"
+            placeholder={t('operations.startupEditor.purchaseLink')}
             className={`w-full ${OPS_FORM_INPUT_SM}`}
           />
           <div className="flex gap-2 pt-1">
@@ -166,14 +168,14 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
               disabled={!form.name.trim() || !form.cost}
               className="flex-1 bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 rounded-lg px-3 py-1.5 text-xs text-white transition-all disabled:opacity-50"
             >
-              {editingId ? 'Save changes' : 'Add item'}
+              {editingId ? t('operations.startupEditor.saveChanges') : t('operations.startupEditor.addItem')}
             </button>
             <button
               type="button"
               onClick={resetForm}
               className="px-3 py-1.5 text-xs text-white/60 hover:text-white transition-colors"
             >
-              Cancel
+              {t('common.cancel')}
             </button>
           </div>
         </div>
@@ -192,7 +194,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
                   <div className="min-w-0 flex-1">
                     <div className="text-sm text-white truncate">{item.name}</div>
                     <div className="text-xs text-white/40 mt-0.5">
-                      {STARTUP_COST_CATEGORY_LABELS[item.category]}
+                      {t(`equipmentCategory.${item.category}`)}
                       {item.vendor ? ` · ${item.vendor}` : ''}
                     </div>
                     {item.purchaseLink && (
@@ -203,7 +205,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
                         className="text-xs text-amber-400/90 hover:text-amber-300 inline-flex items-center gap-1 mt-1"
                         onClick={e => e.stopPropagation()}
                       >
-                        View link <ExternalLink className="w-3 h-3" />
+                        {t('operations.startupEditor.viewLink')} <ExternalLink className="w-3 h-3" />
                       </a>
                     )}
                   </div>
@@ -219,7 +221,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
                     type="button"
                     onClick={() => startEdit(item)}
                     className="text-white/40 hover:text-white transition-colors"
-                    title="Edit"
+                    title={t('common.edit')}
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
@@ -227,7 +229,7 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
                     type="button"
                     onClick={() => handleRemove(item.id)}
                     className="text-white/40 hover:text-red-400 transition-colors"
-                    title="Remove"
+                    title={t('common.remove')}
                   >
                     <Trash2 className="w-3.5 h-3.5" />
                   </button>
@@ -238,12 +240,12 @@ export function StartupCostsEditor({ items, onChange }: StartupCostsEditorProps)
         </div>
       ) : (
         <div className="bg-white/5 border border-dashed border-white/10 rounded-xl p-4 text-center">
-          <p className="text-xs text-white/40">No startup costs added yet</p>
+          <p className="text-xs text-white/40">{t('operations.startupEditor.empty')}</p>
         </div>
       )}
 
       <div className="flex justify-between text-sm pt-1 border-t border-amber-500/20">
-        <span className="text-white/50">Total startup capital</span>
+        <span className="text-white/50">{t('operations.startupEditor.totalStartup')}</span>
         <span className="text-white font-medium">${fmtCurrency(total)}</span>
       </div>
     </div>

@@ -5,6 +5,7 @@ import {
 } from 'lucide-react';
 import type { FarmConfig } from '../../contexts/FarmConfigContext';
 import { getTotalPlantsByCrop } from '../../contexts/FarmConfigContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import {
   getFinancialPlan,
   updateFinancialPlan,
@@ -87,6 +88,7 @@ export function FinancialPlanDetailSection({
   onDeleted,
   onDuplicated,
 }: FinancialPlanDetailSectionProps) {
+  const { t } = useLanguage();
   const [planMeta, setPlanMeta] = useState<Pick<FinancialPlan, 'id' | 'createdAt' | 'updatedAt'> | null>(null);
   const [planName, setPlanName] = useState('');
   const [config, setConfig] = useState<FarmConfig | null>(null);
@@ -148,7 +150,7 @@ export function FinancialPlanDetailSection({
       setTimeout(() => setSaveState('idle'), 2500);
     } catch (e) {
       console.error('Failed to save plan:', e);
-      alert('Failed to save plan. Please try again.');
+      alert(t('operations.planDetail.failedSave'));
       setSaveState('idle');
     }
   }
@@ -161,7 +163,7 @@ export function FinancialPlanDetailSection({
       onDuplicated(copy.id);
     } catch (e) {
       console.error('Failed to duplicate plan:', e);
-      alert('Failed to duplicate plan. Please try again.');
+      alert(t('operations.planDetail.failedDuplicate'));
     } finally {
       setDuplicating(false);
     }
@@ -176,7 +178,7 @@ export function FinancialPlanDetailSection({
       onDeleted();
     } catch (e) {
       console.error('Failed to delete plan:', e);
-      alert('Failed to delete plan. Please try again.');
+      alert(t('operations.planDetail.failedDelete'));
     } finally {
       setDeleting(false);
     }
@@ -185,7 +187,7 @@ export function FinancialPlanDetailSection({
   if (loading) {
     return (
       <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
-        <div className="flex items-center justify-center h-full text-white/60">Loading plan…</div>
+        <div className="flex items-center justify-center h-full text-white/60">{t('operations.planDetail.loading')}</div>
       </div>
     );
   }
@@ -194,8 +196,8 @@ export function FinancialPlanDetailSection({
     return (
       <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
         <div className="flex flex-col items-center justify-center h-full gap-4">
-          <p className="text-white/60">Plan not found</p>
-          <button onClick={onBack} className="text-green-400 text-sm hover:text-green-300">← Back</button>
+          <p className="text-white/60">{t('operations.planDetail.notFound')}</p>
+          <button onClick={onBack} className="text-green-400 text-sm hover:text-green-300">← {t('common.back')}</button>
         </div>
       </div>
     );
@@ -204,9 +206,9 @@ export function FinancialPlanDetailSection({
   const profitColor = calc.monthlyProfit >= 0 ? 'text-green-400' : 'text-red-400';
   const paybackLabel = calc.paybackMonths
     ? calc.paybackMonths < 24
-      ? `${fmtCurrency(calc.paybackMonths, 0)} months`
-      : `${fmtCurrency(calc.paybackMonths / 12, 1)} years`
-    : 'Not profitable yet';
+      ? `${fmtCurrency(calc.paybackMonths, 0)} ${t('common.months')}`
+      : `${fmtCurrency(calc.paybackMonths / 12, 1)} ${t('common.years')}`
+    : t('operations.planDetail.notProfitable');
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
@@ -222,7 +224,7 @@ export function FinancialPlanDetailSection({
             className="flex items-center gap-2 text-white/60 hover:text-white transition-colors w-fit text-sm"
           >
             <ArrowLeft className="w-4 h-4" />
-            Back to Operations
+            {t('operations.planDetail.back')}
           </button>
 
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
@@ -234,7 +236,10 @@ export function FinancialPlanDetailSection({
                 className="w-full bg-transparent text-white tracking-tight text-[32px] focus:outline-none border-b border-transparent focus:border-green-500/40 pb-1"
               />
               <p className="text-white/40 text-sm mt-1">
-                Updated {formatPlanDate(planMeta.updatedAt)} · Saved {formatPlanDate(planMeta.createdAt)}
+                {t('operations.planDetail.updatedSaved', {
+                  updated: formatPlanDate(planMeta.updatedAt),
+                  saved: formatPlanDate(planMeta.createdAt),
+                })}
               </p>
             </div>
             <div className="flex items-center gap-2 shrink-0">
@@ -242,12 +247,12 @@ export function FinancialPlanDetailSection({
                 onClick={handleDuplicate}
                 disabled={duplicating}
                 className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-[18px] py-[9px] transition-all disabled:opacity-40"
-                title="Create a copy of this plan"
+                title={t('operations.planDetail.duplicateTitle')}
               >
                 {duplicating
                   ? <Loader className="w-4 h-4 text-white/60 animate-spin" />
                   : <Copy className="w-4 h-4 text-white/60" />}
-                <span className="text-white/70 text-[12px] hidden sm:inline">Duplicate</span>
+                <span className="text-white/70 text-[12px] hidden sm:inline">{t('operations.planDetail.duplicate')}</span>
               </button>
               {saveState === 'idle' && (
                 <button
@@ -256,25 +261,25 @@ export function FinancialPlanDetailSection({
                   className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-[18px] py-[9px] transition-all disabled:opacity-40"
                 >
                   <Save className="w-4 h-4 text-green-400" />
-                  <span className="text-white text-[12px]">Save Changes</span>
+                  <span className="text-white text-[12px]">{t('operations.planDetail.saveChanges')}</span>
                 </button>
               )}
               {saveState === 'saving' && (
                 <div className="flex items-center gap-2 text-white/40 text-sm px-3">
                   <Loader className="w-4 h-4 animate-spin" />
-                  Saving…
+                  {t('operations.planDetail.saving')}
                 </div>
               )}
               {saveState === 'saved' && (
                 <div className="flex items-center gap-2 text-green-400 text-sm px-3">
                   <Check className="w-4 h-4" />
-                  Saved!
+                  {t('operations.planDetail.saved')}
                 </div>
               )}
               <button
                 onClick={() => setShowDeleteConfirm(true)}
                 className="p-2 text-white/40 hover:text-red-400 transition-colors"
-                title="Delete plan"
+                title={t('operations.planDetail.deleteTitle')}
               >
                 <Trash2 className="w-5 h-5" />
               </button>
@@ -287,10 +292,10 @@ export function FinancialPlanDetailSection({
             <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
               <div className="flex items-center gap-2 mb-4">
                 <Box className="w-4 h-4 text-green-400" />
-                <h2 className="text-sm text-white/70 uppercase tracking-wider">Farm Design</h2>
+                <h2 className="text-sm text-white/70 uppercase tracking-wider">{t('operations.planDetail.farmDesign')}</h2>
               </div>
               {config.systemBlocks.length === 0 ? (
-                <p className="text-sm text-white/40">No systems configured</p>
+                <p className="text-sm text-white/40">{t('operations.planDetail.noSystems')}</p>
               ) : (
                 <div className="space-y-3">
                   {config.systemBlocks.map(block => (
@@ -299,66 +304,71 @@ export function FinancialPlanDetailSection({
                     </div>
                   ))}
                   <div className="pt-2 space-y-1 text-xs text-white/40">
-                    <div>Environment: {config.environment.replace('-', ' ')}</div>
-                    <div>Lighting: {config.lighting}% · Automation: {config.automation}</div>
+                    <div>{t('operations.planDetail.environment')} {config.environment.replace('-', ' ')}</div>
+                    <div>
+                      {t('operations.planDetail.lightingAutomation', {
+                        lighting: config.lighting,
+                        automation: config.automation,
+                      })}
+                    </div>
                   </div>
                 </div>
               )}
               <p className="text-xs text-white/30 mt-4">
-                To change system layout or crops, use the planner configurator and save again.
+                {t('operations.planDetail.changeLayoutHint')}
               </p>
             </div>
 
             <div>
-              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">Monthly P&amp;L</h2>
+              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">{t('operations.planDetail.monthlyPnL')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <MetricCard label="Monthly Revenue" value={`$${fmtCurrency(calc.monthlyRevenue)}`} color="text-green-400" icon={DollarSign} />
-                <MetricCard label="Monthly Costs" value={`$${fmtCurrency(calc.totalMonthlyOp)}`} sub="Operating only" icon={Activity} />
-                <MetricCard label="Monthly Profit" value={`$${fmtCurrency(calc.monthlyProfit)}`} color={profitColor} icon={TrendingUp} />
-                <MetricCard label="Gross Margin" value={`${fmtCurrency(calc.margin, 1)}%`} color={profitColor} icon={Percent} />
+                <MetricCard label={t('operations.planDetail.monthlyRevenue')} value={`$${fmtCurrency(calc.monthlyRevenue)}`} color="text-green-400" icon={DollarSign} />
+                <MetricCard label={t('operations.planDetail.monthlyCosts')} value={`$${fmtCurrency(calc.totalMonthlyOp)}`} sub={t('operations.planDetail.operatingOnly')} icon={Activity} />
+                <MetricCard label={t('operations.planDetail.monthlyProfit')} value={`$${fmtCurrency(calc.monthlyProfit)}`} color={profitColor} icon={TrendingUp} />
+                <MetricCard label={t('operations.planDetail.grossMargin')} value={`${fmtCurrency(calc.margin, 1)}%`} color={profitColor} icon={Percent} />
               </div>
             </div>
             <div>
-              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">Annual</h2>
+              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">{t('operations.planDetail.annual')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                <MetricCard label="Annual Revenue" value={`$${fmtCurrency(calc.annualRevenue)}`} color="text-green-400" icon={DollarSign} />
-                <MetricCard label="Annual Costs" value={`$${fmtCurrency(calc.annualCosts)}`} sub="Operating × 12" icon={Activity} />
-                <MetricCard label="Annual Profit" value={`$${fmtCurrency(calc.annualProfit)}`} color={profitColor} icon={TrendingUp} />
+                <MetricCard label={t('operations.planDetail.annualRevenue')} value={`$${fmtCurrency(calc.annualRevenue)}`} color="text-green-400" icon={DollarSign} />
+                <MetricCard label={t('operations.planDetail.annualCosts')} value={`$${fmtCurrency(calc.annualCosts)}`} sub={t('operations.planDetail.operatingX12')} icon={Activity} />
+                <MetricCard label={t('operations.planDetail.annualProfit')} value={`$${fmtCurrency(calc.annualProfit)}`} color={profitColor} icon={TrendingUp} />
               </div>
             </div>
             <div>
-              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">Startup Investment &amp; Returns</h2>
+              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">{t('operations.planDetail.startupInvestment')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                 <MetricCard
-                  label="Startup Capital"
+                  label={t('operations.planDetail.startupCapital')}
                   value={`$${fmtCurrency(calc.totalCapital)}`}
-                  sub="Equipment + installation"
+                  sub={t('operations.planDetail.equipmentInstall')}
                   icon={Package}
                 />
-                <MetricCard label="ROI" value={`${fmtCurrency(calc.roi, 1)}%`} sub="Annual profit ÷ capital" color={profitColor} icon={TrendingUp} />
-                <MetricCard label="Payback Period" value={paybackLabel} sub="Capital ÷ monthly profit" icon={Package} />
+                <MetricCard label={t('common.roi')} value={`${fmtCurrency(calc.roi, 1)}%`} sub={t('operations.planDetail.roiSub')} color={profitColor} icon={TrendingUp} />
+                <MetricCard label={t('operations.planDetail.paybackPeriod')} value={paybackLabel} sub={t('operations.planDetail.paybackSub')} icon={Package} />
               </div>
             </div>
             <div>
-              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">Production</h2>
+              <h2 className="text-xs text-white/40 uppercase tracking-wider mb-3">{t('operations.planDetail.production')}</h2>
               <div className="grid grid-cols-2 sm:grid-cols-2 gap-3">
-                <MetricCard label="Monthly Yield" value={`${fmtCurrency(calc.monthlyYieldKg, 1)} kg`} icon={Scale} />
-                <MetricCard label="Annual Yield" value={`${fmtCurrency(calc.annualYieldKg, 1)} kg`} icon={Scale} />
+                <MetricCard label={t('operations.planDetail.monthlyYield')} value={`${fmtCurrency(calc.monthlyYieldKg, 1)} ${t('common.kg')}`} icon={Scale} />
+                <MetricCard label={t('operations.planDetail.annualYield')} value={`${fmtCurrency(calc.annualYieldKg, 1)} ${t('common.kg')}`} icon={Scale} />
               </div>
             </div>
           </div>
 
           {/* Costs — startup capital & monthly operating */}
           <section className="bg-white/[0.02] border border-white/10 rounded-2xl p-4 sm:p-5">
-            <h2 className="text-xs text-white/40 uppercase tracking-wider mb-4">Costs</h2>
+            <h2 className="text-xs text-white/40 uppercase tracking-wider mb-4">{t('common.costs')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
               <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5 h-full">
                 <div className="flex items-center gap-2 mb-1">
                   <Package className="w-4 h-4 text-amber-400" />
-                  <h3 className="text-sm text-white/70 uppercase tracking-wider">Startup Capital</h3>
+                  <h3 className="text-sm text-white/70 uppercase tracking-wider">{t('operations.planDetail.startupCapital')}</h3>
                 </div>
                 <p className="text-xs text-white/40 mb-4">
-                  One-time upfront investment. Affects startup capital, ROI, and payback — not monthly operating costs.
+                  {t('operations.planDetail.startupHint')}
                 </p>
                 <StartupCostsEditor
                   items={inputs.startupItems}
@@ -366,7 +376,10 @@ export function FinancialPlanDetailSection({
                 />
                 <div className="mt-3 pt-3 border-t border-amber-500/20">
                   <p className="text-xs text-amber-400/70">
-                    → Payback {paybackLabel} · ROI {fmtCurrency(calc.roi, 1)}%
+                    {t('operations.planDetail.paybackRoi', {
+                      payback: paybackLabel,
+                      roi: fmtCurrency(calc.roi, 1),
+                    })}
                   </p>
                 </div>
               </div>
@@ -374,27 +387,27 @@ export function FinancialPlanDetailSection({
               <div className="bg-white/5 border border-white/10 rounded-2xl p-5 h-full">
                 <div className="flex items-center gap-2 mb-1">
                   <Activity className="w-4 h-4 text-red-400" />
-                  <h3 className="text-sm text-white/70 uppercase tracking-wider">Monthly Operating Costs</h3>
+                  <h3 className="text-sm text-white/70 uppercase tracking-wider">{t('operations.planDetail.monthlyOperating')}</h3>
                 </div>
                 <p className="text-xs text-white/40 mb-4">
-                  Recurring monthly expenses. Directly reduce monthly profit and annual operating costs.
+                  {t('operations.planDetail.operatingHint')}
                 </p>
-                <EditableRow label="Electricity" value={inputs.electricity} onChange={v => patchInputs({ electricity: v })} step={100} suffix="/mo" />
-                <EditableRow label="Water" value={inputs.water} onChange={v => patchInputs({ water: v })} step={50} suffix="/mo" />
-                <EditableRow label="Nutrients & supplies" value={inputs.nutrients} onChange={v => patchInputs({ nutrients: v })} step={100} suffix="/mo" />
-                <EditableRow label="Labor" value={inputs.labor} onChange={v => patchInputs({ labor: v })} step={500} suffix="/mo" />
-                <EditableRow label="Other (rent, misc.)" value={inputs.otherMonthly} onChange={v => patchInputs({ otherMonthly: v })} step={100} suffix="/mo" />
+                <EditableRow label={t('operations.planDetail.electricity')} value={inputs.electricity} onChange={v => patchInputs({ electricity: v })} step={100} suffix={t('common.perMo')} />
+                <EditableRow label={t('operations.planDetail.water')} value={inputs.water} onChange={v => patchInputs({ water: v })} step={50} suffix={t('common.perMo')} />
+                <EditableRow label={t('operations.planDetail.nutrients')} value={inputs.nutrients} onChange={v => patchInputs({ nutrients: v })} step={100} suffix={t('common.perMo')} />
+                <EditableRow label={t('operations.planDetail.labor')} value={inputs.labor} onChange={v => patchInputs({ labor: v })} step={500} suffix={t('common.perMo')} />
+                <EditableRow label={t('operations.planDetail.otherMonthly')} value={inputs.otherMonthly} onChange={v => patchInputs({ otherMonthly: v })} step={100} suffix={t('common.perMo')} />
                 <div className="mt-3 pt-3 border-t border-white/10 space-y-1">
                   <div className="flex justify-between text-sm">
-                    <span className="text-white/50">Total monthly operating</span>
-                    <span className="text-white font-medium">${fmtCurrency(calc.totalMonthlyOp)}/mo</span>
+                    <span className="text-white/50">{t('operations.planDetail.totalMonthlyOp')}</span>
+                    <span className="text-white font-medium">${fmtCurrency(calc.totalMonthlyOp)}{t('common.perMo')}</span>
                   </div>
                   <div className="flex justify-between text-xs">
-                    <span className="text-white/40">Annual operating costs</span>
-                    <span className="text-white/60">${fmtCurrency(calc.annualCosts)}/yr</span>
+                    <span className="text-white/40">{t('operations.planDetail.annualOperating')}</span>
+                    <span className="text-white/60">${fmtCurrency(calc.annualCosts)}{t('common.perYr')}</span>
                   </div>
                   <p className="text-xs text-white/40">
-                    → Monthly profit after revenue: <span className={profitColor}>${fmtCurrency(calc.monthlyProfit)}</span>
+                    {t('operations.planDetail.profitAfterRevenue')} <span className={profitColor}>${fmtCurrency(calc.monthlyProfit)}</span>
                   </p>
                 </div>
               </div>
@@ -405,14 +418,13 @@ export function FinancialPlanDetailSection({
           <div className="bg-white/5 border border-white/10 rounded-2xl p-5">
             <div className="flex items-center gap-2 mb-1">
               <Leaf className="w-4 h-4 text-green-400" />
-              <h2 className="text-sm text-white/70 uppercase tracking-wider">Production & Pricing</h2>
+              <h2 className="text-sm text-white/70 uppercase tracking-wider">{t('operations.planDetail.productionPricing')}</h2>
             </div>
             <p className="text-xs text-white/40 mb-4">
-              Revenue per crop = total plants/trays × yield × cycles/year × price/kg. The green figure is
-              monthly revenue for <span className="text-white/60">all units of that crop combined</span>, not per plant.
+              {t('operations.planDetail.pricingHint')}
             </p>
             {activeCropIds.length === 0 ? (
-              <p className="text-sm text-white/40">No crops assigned</p>
+              <p className="text-sm text-white/40">{t('operations.planDetail.noCrops')}</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {activeCropIds.map(cropId => {
@@ -431,47 +443,47 @@ export function FinancialPlanDetailSection({
                               {cropDef.name}
                             </span>
                             <p className="text-xs text-white/40 mt-1.5">
-                              {total} {cropDef.unitLabel}{total !== 1 ? 's' : ''} in farm design
+                              {total} {cropDef.unitLabel}{total !== 1 ? 's' : ''} {t('operations.planDetail.inFarmDesign')}
                             </p>
                           </div>
                           <div className="text-right shrink-0">
                             <p className="text-[10px] text-white/40 uppercase tracking-wider">
-                              All {total} {cropDef.unitLabel}s
+                              {t('operations.planDetail.allUnits')} {total} {cropDef.unitLabel}s
                             </p>
                             <p className="text-lg text-green-400">
-                              ${fmtCurrency(breakdown.monthlyRev)}/mo
+                              ${fmtCurrency(breakdown.monthlyRev)}{t('common.perMo')}
                             </p>
                           </div>
                         </div>
                         <div className="mt-3 rounded-lg bg-white/3 px-3 py-2 text-[11px] text-white/50 leading-relaxed space-y-0.5">
                           <p>
-                            {total} {cropDef.unitLabel}s × {p.yieldPerUnitPerCycle} kg/{cropDef.unitLabel}/cycle
-                            × {p.cyclesPerYear} cycles/yr
-                            {p.lossRate > 0 ? ` × ${100 - p.lossRate}% after loss` : ''}
+                            {total} {cropDef.unitLabel}s × {p.yieldPerUnitPerCycle} {t('common.kg')}/{cropDef.unitLabel}/{t('financialCalculator.cycles')}
+                            × {p.cyclesPerYear} {t('financialCalculator.cycles')}/{t('common.yr')}
+                            {p.lossRate > 0 ? ` × ${100 - p.lossRate}% ${t('financialCalculator.afterLoss')}` : ''}
                           </p>
                           <p>
-                            = {fmtCurrency(breakdown.monthlyKg, 1)} kg/mo harvested
-                            × ${fmtCurrency(p.pricePerKg)}/kg
-                            → <span className="text-green-400/80">${fmtCurrency(breakdown.monthlyRev)}/mo</span>
+                            = {fmtCurrency(breakdown.monthlyKg, 1)} {t('common.kg')}/{t('common.mo')} harvested
+                            × ${fmtCurrency(p.pricePerKg)}{t('common.perKg')}
+                            → <span className="text-green-400/80">${fmtCurrency(breakdown.monthlyRev)}{t('common.perMo')}</span>
                           </p>
                           {total > 0 && (
                             <p className="text-white/35 pt-0.5">
-                              ≈ ${fmtCurrency(breakdown.perUnitMonthlyRev, 2)}/{cropDef.unitLabel}/mo
-                              {' '}({fmtCurrency(breakdown.perUnitMonthlyKg, 2)} kg/{cropDef.unitLabel}/mo)
+                              ≈ ${fmtCurrency(breakdown.perUnitMonthlyRev, 2)}/{cropDef.unitLabel}/{t('common.mo')}
+                              {' '}({fmtCurrency(breakdown.perUnitMonthlyKg, 2)} {t('common.kg')}/{cropDef.unitLabel}/{t('common.mo')})
                             </p>
                           )}
                         </div>
                       </div>
                       <EditableRow
-                        label={`Yield/${cropDef.unitLabel}/cycle`}
+                        label={t('operations.planDetail.yieldPerCycle', { unit: cropDef.unitLabel })}
                         value={p.yieldPerUnitPerCycle}
                         onChange={v => patchCropParam(cropId, { yieldPerUnitPerCycle: v })}
                         step={0.01}
                         prefix=""
-                        suffix="kg"
+                        suffix={t('common.kg')}
                       />
                       <EditableRow
-                        label="Cycles per year"
+                        label={t('operations.planDetail.cyclesPerYear')}
                         value={p.cyclesPerYear}
                         onChange={v => patchCropParam(cropId, { cyclesPerYear: v })}
                         step={1}
@@ -479,14 +491,14 @@ export function FinancialPlanDetailSection({
                         suffix=""
                       />
                       <EditableRow
-                        label="Price per kg"
+                        label={t('operations.planDetail.pricePerKg')}
                         value={p.pricePerKg}
                         onChange={v => patchCropParam(cropId, { pricePerKg: v })}
                         step={10}
-                        suffix="/kg"
+                        suffix={t('common.perKg')}
                       />
                       <EditableRow
-                        label="Harvest loss"
+                        label={t('operations.planDetail.harvestLoss')}
                         value={p.lossRate}
                         onChange={v => patchCropParam(cropId, { lossRate: v })}
                         step={1}
@@ -505,9 +517,9 @@ export function FinancialPlanDetailSection({
 
       <ConfirmDialog
         isOpen={showDeleteConfirm}
-        title="Delete financial plan?"
-        description={`"${planName}" will be permanently deleted. This cannot be undone.`}
-        confirmLabel="Delete plan"
+        title={t('operations.planDetail.deletePlanTitle')}
+        description={t('operations.planDetail.deletePlanBody', { name: planName })}
+        confirmLabel={t('operations.planDetail.deletePlanConfirm')}
         destructive
         loading={deleting}
         onConfirm={handleDelete}

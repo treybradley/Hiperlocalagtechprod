@@ -5,10 +5,10 @@ import { HydroponicSystem } from '../../../../storage/models';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import {
   SYSTEM_TYPES,
-  SYSTEM_TYPE_FULL_LABELS,
   type SystemType,
 } from '../../../data/crops';
 import { OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER, OPS_SELECT_TRIGGER_SM } from '../opsFormClasses';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface CreateSystemModalProps {
   isOpen: boolean;
@@ -20,6 +20,7 @@ type EquipmentCategory = 'lighting' | 'pumps' | 'nutrients' | 'seeds' | 'structu
 type RecurringCostCategory = 'utilities' | 'nutrients' | 'maintenance' | 'labor' | 'other';
 
 export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemModalProps) {
+  const { t } = useLanguage();
   const [step, setStep] = useState(1);
   const [saving, setSaving] = useState(false);
 
@@ -160,7 +161,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
       onClose();
     } catch (error) {
       console.error('Failed to create system:', error);
-      alert('Failed to create system. Please try again.');
+      alert(t('operations.createSystem.failed'));
     } finally {
       setSaving(false);
     }
@@ -195,8 +196,8 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div>
-            <h2 className="text-2xl text-white">Create New System</h2>
-            <p className="text-sm text-white/60 mt-1">Step {step} of 3</p>
+            <h2 className="text-2xl text-white">{t('operations.createSystem.title')}</h2>
+            <p className="text-sm text-white/60 mt-1">{t('operations.createSystem.stepOf', { n: step })}</p>
           </div>
           <button
             onClick={handleClose}
@@ -224,18 +225,18 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
           {step === 1 && (
             <div className="space-y-4">
               <div>
-                <label className="block text-sm text-white/70 mb-2">System Name *</label>
+                <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.systemName')}</label>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g., Rooftop NFT System A"
+                  placeholder={t('operations.createSystem.systemNamePh')}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                 />
               </div>
 
               <div>
-                <label className="block text-sm text-white/70 mb-2">System Type *</label>
+                <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.systemType')}</label>
                 <Select value={systemType} onValueChange={v => setSystemType(v as SystemType)}>
                   <SelectTrigger className={OPS_SELECT_TRIGGER}>
                     <SelectValue />
@@ -243,7 +244,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                   <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
                     {SYSTEM_TYPES.map(st => (
                       <SelectItem key={st} value={st} className={OPS_SELECT_ITEM}>
-                        {SYSTEM_TYPE_FULL_LABELS[st]}
+                        {t(`systemTypesFull.${st}`)}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -252,7 +253,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
 
               <div className="grid grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Length (m) *</label>
+                  <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.length')}</label>
                   <input
                     type="number"
                     value={length}
@@ -262,7 +263,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Width (m) *</label>
+                  <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.width')}</label>
                   <input
                     type="number"
                     value={width}
@@ -272,7 +273,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Height (m) *</label>
+                  <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.height')}</label>
                   <input
                     type="number"
                     value={height}
@@ -285,8 +286,8 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Units *</label>
-                  <p className="text-xs text-white/40 mb-2">Pots, channels, trays, or beds</p>
+                  <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.units')}</label>
+                  <p className="text-xs text-white/40 mb-2">{t('operations.createSystem.unitsHint')}</p>
                   <input
                     type="number"
                     value={channels}
@@ -296,8 +297,8 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Plants per unit *</label>
-                  <p className="text-xs text-white/40 mb-2">Matches Design Your Farm</p>
+                  <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.plantsPerUnit')}</label>
+                  <p className="text-xs text-white/40 mb-2">{t('operations.createSystem.plantsPerUnitHint')}</p>
                   <input
                     type="number"
                     value={plantsPerChannel}
@@ -310,20 +311,20 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
 
               {channels && plantsPerChannel && (
                 <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-                  <span className="text-sm text-white/70">Total Capacity: </span>
+                  <span className="text-sm text-white/70">{t('operations.createSystem.totalCapacity')} </span>
                   <span className="text-lg text-green-400 font-medium">
-                    {parseInt(channels) * parseInt(plantsPerChannel)} plants
+                    {parseInt(channels) * parseInt(plantsPerChannel)} {t('common.plants')}
                   </span>
                 </div>
               )}
 
               <div>
-                <label className="block text-sm text-white/70 mb-2">Location *</label>
+                <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.location')}</label>
                 <input
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  placeholder="e.g., Rooftop North, Tulum"
+                  placeholder={t('operations.createSystem.locationPh')}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                 />
               </div>
@@ -335,13 +336,13 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
             <div className="space-y-4">
               <div>
                 <label className="block text-sm text-white/70 mb-2">
-                  Hypothesis (Optional)
+                  {t('operations.createSystem.hypothesisOptional')}
                 </label>
-                <p className="text-xs text-white/50 mb-2">What are you testing with this system?</p>
+                <p className="text-xs text-white/50 mb-2">{t('operations.createSystem.hypothesisHint')}</p>
                 <textarea
                   value={hypothesis}
                   onChange={(e) => setHypothesis(e.target.value)}
-                  placeholder="e.g., NFT with 40% blue LED spectrum will increase basil yield by 20%"
+                  placeholder={t('operations.createSystem.hypothesisPh')}
                   rows={3}
                   className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50 resize-none"
                 />
@@ -349,13 +350,13 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
 
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-sm text-white/70">Variables</label>
+                  <label className="block text-sm text-white/70">{t('operations.createSystem.variables')}</label>
                   <button
                     onClick={addVariable}
                     className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Variable
+                    {t('operations.createSystem.addVariable')}
                   </button>
                 </div>
                 {variables.map((v, index) => (
@@ -364,21 +365,21 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                       type="text"
                       value={v.name}
                       onChange={(e) => updateVariable(index, 'name', e.target.value)}
-                      placeholder="Variable name"
+                      placeholder={t('operations.createSystem.variableName')}
                       className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                     />
                     <input
                       type="text"
                       value={v.value}
                       onChange={(e) => updateVariable(index, 'value', e.target.value)}
-                      placeholder="Your value"
+                      placeholder={t('operations.createSystem.yourValue')}
                       className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                     />
                     <input
                       type="text"
                       value={v.controlValue}
                       onChange={(e) => updateVariable(index, 'controlValue', e.target.value)}
-                      placeholder="Control value"
+                      placeholder={t('operations.createSystem.controlValue')}
                       className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                     />
                     <button
@@ -393,22 +394,22 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Control Description</label>
+                  <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.controlDescription')}</label>
                   <input
                     type="text"
                     value={controlDescription}
                     onChange={(e) => setControlDescription(e.target.value)}
-                    placeholder="What you're comparing against"
+                    placeholder={t('operations.createSystem.controlDescHint')}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm text-white/70 mb-2">Control Source</label>
+                  <label className="block text-sm text-white/70 mb-2">{t('operations.createSystem.controlSource')}</label>
                   <input
                     type="text"
                     value={controlSource}
                     onChange={(e) => setControlSource(e.target.value)}
-                    placeholder="e.g., Industry standard"
+                    placeholder={t('operations.createSystem.controlSourcePh')}
                     className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                   />
                 </div>
@@ -422,13 +423,13 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
               {/* Equipment */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm text-white/70">Equipment</label>
+                  <label className="block text-sm text-white/70">{t('operations.createSystem.equipment')}</label>
                   <button
                     onClick={addEquipment}
                     className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Item
+                    {t('operations.createSystem.addItem')}
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -439,7 +440,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                           type="text"
                           value={item.name}
                           onChange={(e) => updateEquipment(item.id, { name: e.target.value })}
-                          placeholder="Item name"
+                          placeholder={t('operations.costs.itemName')}
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
                         <Select
@@ -450,13 +451,13 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
-                            <SelectItem value="lighting" className={OPS_SELECT_ITEM}>Lighting</SelectItem>
-                            <SelectItem value="pumps" className={OPS_SELECT_ITEM}>Pumps</SelectItem>
-                            <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
-                            <SelectItem value="seeds" className={OPS_SELECT_ITEM}>Seeds</SelectItem>
-                            <SelectItem value="structure" className={OPS_SELECT_ITEM}>Structure</SelectItem>
-                            <SelectItem value="sensors" className={OPS_SELECT_ITEM}>Sensors</SelectItem>
-                            <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                            <SelectItem value="lighting" className={OPS_SELECT_ITEM}>{t('equipmentCategory.lighting')}</SelectItem>
+                            <SelectItem value="pumps" className={OPS_SELECT_ITEM}>{t('equipmentCategory.pumps')}</SelectItem>
+                            <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>{t('equipmentCategory.nutrients')}</SelectItem>
+                            <SelectItem value="seeds" className={OPS_SELECT_ITEM}>{t('equipmentCategory.seeds')}</SelectItem>
+                            <SelectItem value="structure" className={OPS_SELECT_ITEM}>{t('equipmentCategory.structure')}</SelectItem>
+                            <SelectItem value="sensors" className={OPS_SELECT_ITEM}>{t('equipmentCategory.sensors')}</SelectItem>
+                            <SelectItem value="other" className={OPS_SELECT_ITEM}>{t('equipmentCategory.other')}</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -465,14 +466,14 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                           type="number"
                           value={item.cost || ''}
                           onChange={(e) => updateEquipment(item.id, { cost: parseFloat(e.target.value) || 0 })}
-                          placeholder="Cost (USD)"
+                          placeholder={t('operations.costs.costUsd')}
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
                         <input
                           type="number"
                           value={item.quantity || ''}
                           onChange={(e) => updateEquipment(item.id, { quantity: parseInt(e.target.value) || 1 })}
-                          placeholder="Qty"
+                          placeholder={t('operations.costs.qty')}
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
                         <button
@@ -486,7 +487,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                         type="text"
                         value={item.purchaseLink}
                         onChange={(e) => updateEquipment(item.id, { purchaseLink: e.target.value })}
-                        placeholder="Purchase link (optional)"
+                        placeholder={t('operations.costs.purchaseLink')}
                         className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                       />
                     </div>
@@ -497,13 +498,13 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
               {/* Recurring Costs */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm text-white/70">Recurring Costs</label>
+                  <label className="block text-sm text-white/70">{t('operations.createSystem.recurringCosts')}</label>
                   <button
                     onClick={addRecurringCost}
                     className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
                   >
                     <Plus className="w-4 h-4" />
-                    Add Cost
+                    {t('operations.createSystem.addCost')}
                   </button>
                 </div>
                 <div className="space-y-2">
@@ -514,7 +515,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                           type="text"
                           value={cost.name}
                           onChange={(e) => updateRecurringCost(cost.id, { name: e.target.value })}
-                          placeholder="Cost name"
+                          placeholder={t('operations.costs.costName')}
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
                         <Select
@@ -525,18 +526,18 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
-                            <SelectItem value="utilities" className={OPS_SELECT_ITEM}>Utilities</SelectItem>
-                            <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>Nutrients</SelectItem>
-                            <SelectItem value="maintenance" className={OPS_SELECT_ITEM}>Maintenance</SelectItem>
-                            <SelectItem value="labor" className={OPS_SELECT_ITEM}>Labor</SelectItem>
-                            <SelectItem value="other" className={OPS_SELECT_ITEM}>Other</SelectItem>
+                            <SelectItem value="utilities" className={OPS_SELECT_ITEM}>{t('recurringCategory.utilities')}</SelectItem>
+                            <SelectItem value="nutrients" className={OPS_SELECT_ITEM}>{t('recurringCategory.nutrients')}</SelectItem>
+                            <SelectItem value="maintenance" className={OPS_SELECT_ITEM}>{t('recurringCategory.maintenance')}</SelectItem>
+                            <SelectItem value="labor" className={OPS_SELECT_ITEM}>{t('recurringCategory.labor')}</SelectItem>
+                            <SelectItem value="other" className={OPS_SELECT_ITEM}>{t('recurringCategory.other')}</SelectItem>
                           </SelectContent>
                         </Select>
                         <input
                           type="number"
                           value={cost.amount || ''}
                           onChange={(e) => updateRecurringCost(cost.id, { amount: parseFloat(e.target.value) || 0 })}
-                          placeholder="Amount"
+                          placeholder={t('operations.costs.amount')}
                           className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                         />
                         <div className="flex gap-2">
@@ -548,8 +549,8 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                               <SelectValue />
                             </SelectTrigger>
                             <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
-                              <SelectItem value="monthly" className={OPS_SELECT_ITEM}>/ mo</SelectItem>
-                              <SelectItem value="yearly" className={OPS_SELECT_ITEM}>/ yr</SelectItem>
+                              <SelectItem value="monthly" className={OPS_SELECT_ITEM}>{t('common.perMo')}</SelectItem>
+                              <SelectItem value="yearly" className={OPS_SELECT_ITEM}>{t('common.perYr')}</SelectItem>
                             </SelectContent>
                           </Select>
                           <button
@@ -568,12 +569,12 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
               {/* Cost Summary */}
               <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/70">Total Capital Cost</span>
+                  <span className="text-sm text-white/70">{t('operations.createSystem.totalCapital')}</span>
                   <span className="text-lg text-white font-medium">${totalCapitalCost.toLocaleString()}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-white/70">Monthly Operating Cost</span>
-                  <span className="text-lg text-green-400 font-medium">${monthlyOperatingCost.toFixed(2)} / mo</span>
+                  <span className="text-sm text-white/70">{t('operations.createSystem.monthlyOperating')}</span>
+                  <span className="text-lg text-green-400 font-medium">${monthlyOperatingCost.toFixed(2)} {t('common.perMo')}</span>
                 </div>
               </div>
             </div>
@@ -587,7 +588,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
             className="flex items-center gap-2 text-white/60 hover:text-white transition-colors"
           >
             <ChevronLeft className="w-4 h-4" />
-            {step > 1 ? 'Back' : 'Cancel'}
+            {step > 1 ? t('common.back') : t('common.cancel')}
           </button>
 
           {step < 3 ? (
@@ -598,7 +599,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                 step === 1 && !canProceedStep1 ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              Next
+              {t('common.next')}
               <ChevronRight className="w-4 h-4" />
             </button>
           ) : (
@@ -609,7 +610,7 @@ export function CreateSystemModal({ isOpen, onClose, onSuccess }: CreateSystemMo
                 !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {saving ? 'Creating...' : 'Create System'}
+              {saving ? t('operations.createSystem.creating') : t('operations.createSystem.create')}
             </button>
           )}
         </div>

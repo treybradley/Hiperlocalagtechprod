@@ -16,6 +16,7 @@ import {
 } from '../../../../storage/utils/dateHelpers';
 import { OPS_FORM_DATE, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER_SM } from '../opsFormClasses';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface DailyLogEntryModalProps {
   isOpen: boolean;
@@ -37,6 +38,7 @@ export function DailyLogEntryModal({
   onClose,
   onSuccess,
 }: DailyLogEntryModalProps) {
+  const { t } = useLanguage();
   const isEditing = Boolean(existingLog);
   const [logDate, setLogDate] = useState(todayLocalDateInputValue());
   const [temperature, setTemperature] = useState('');
@@ -273,7 +275,7 @@ export function DailyLogEntryModal({
       onClose();
     } catch (error) {
       console.error('Failed to save daily log:', error);
-      alert(`Failed to ${isEditing ? 'update' : 'create'} log. Please try again.`);
+      alert(isEditing ? t('operations.dailyLog.failedUpdate') : t('operations.dailyLog.failedCreate'));
     } finally {
       setSaving(false);
     }
@@ -311,9 +313,9 @@ export function DailyLogEntryModal({
         {/* Header */}
         <div className="flex items-center justify-between p-[18px] border-b border-white/10">
           <div>
-            <h2 className="text-lg text-white">{isEditing ? 'Edit Daily Log' : 'Add Daily Log'}</h2>
+            <h2 className="text-lg text-white">{isEditing ? t('operations.dailyLog.editTitle') : t('operations.dailyLog.addTitle')}</h2>
             <p className="text-sm text-white/60 mt-1">
-              {isEditing ? 'Update observations and metrics' : "Record today's observations and metrics"}
+              {isEditing ? t('operations.dailyLog.editSubtitle') : t('operations.dailyLog.addSubtitle')}
             </p>
           </div>
           <button
@@ -328,7 +330,7 @@ export function DailyLogEntryModal({
         <div className="p-[18px] overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-6">
           {/* Date */}
           <div>
-            <label className="block text-sm text-white/70 mb-2">Log Date</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.dailyLog.logDate')}</label>
             <input
               type="date"
               value={logDate}
@@ -339,10 +341,10 @@ export function DailyLogEntryModal({
 
           {/* Environmental Metrics */}
           <div>
-            <h3 className="text-white mb-3">Environmental Metrics</h3>
+            <h3 className="text-white mb-3">{t('operations.dailyLog.environmental')}</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               <div>
-                <label className="block text-xs text-white/60 mb-2">Temperature (°C)</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.temperature')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -353,7 +355,7 @@ export function DailyLogEntryModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-2">Humidity (%)</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.humidity')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -364,7 +366,7 @@ export function DailyLogEntryModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-2">pH</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.ph')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -375,7 +377,7 @@ export function DailyLogEntryModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-2">EC (mS/cm)</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.ec')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -386,7 +388,7 @@ export function DailyLogEntryModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-2">Water Temp (°C)</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.waterTemp')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -397,7 +399,7 @@ export function DailyLogEntryModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-2">Light Level (PPFD)</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.lightLevel')}</label>
                 <input
                   type="number"
                   value={lightLevel}
@@ -411,7 +413,7 @@ export function DailyLogEntryModal({
 
           {/* Plant Health */}
           <div>
-            <label className="block text-sm text-white/70 mb-2">Plant Health</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.dailyLog.plantHealth')}</label>
             <div className="flex gap-2">
               {(['excellent', 'good', 'fair', 'poor', 'critical'] as PlantHealth[]).map((health) => (
                 <button
@@ -427,7 +429,7 @@ export function DailyLogEntryModal({
                       : 'bg-white/5 text-white/60 border-2 border-transparent hover:bg-white/10'
                   }`}
                 >
-                  {health}
+                  {t(`plantHealth.${health}`)}
                 </button>
               ))}
             </div>
@@ -435,11 +437,11 @@ export function DailyLogEntryModal({
 
           {/* Observations */}
           <div>
-            <label className="block text-sm text-white/70 mb-2">Observations *</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.dailyLog.observations')}</label>
             <textarea
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
-              placeholder="What did you notice today? Growth patterns, leaf color, root development..."
+              placeholder={t('operations.dailyLog.observationsPh')}
               rows={4}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50 resize-none"
             />
@@ -447,11 +449,11 @@ export function DailyLogEntryModal({
 
           {/* Visual Changes */}
           <div>
-            <label className="block text-sm text-white/70 mb-2">Visual Changes (Optional)</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.dailyLog.visualChanges')}</label>
             <textarea
               value={visualChanges}
               onChange={(e) => setVisualChanges(e.target.value)}
-              placeholder="Specific visual observations: leaf size, color changes, new growth..."
+              placeholder={t('operations.dailyLog.visualPh')}
               rows={2}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50 resize-none"
             />
@@ -459,10 +461,10 @@ export function DailyLogEntryModal({
 
           {/* Resource Usage */}
           <div>
-            <h3 className="text-white mb-3">Resource Usage</h3>
+            <h3 className="text-white mb-3">{t('operations.dailyLog.resourceUsage')}</h3>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs text-white/60 mb-2">Water Added (L)</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.waterAdded')}</label>
                 <input
                   type="number"
                   step="0.1"
@@ -473,12 +475,12 @@ export function DailyLogEntryModal({
                 />
               </div>
               <div>
-                <label className="block text-xs text-white/60 mb-2">Nutrients Added</label>
+                <label className="block text-xs text-white/60 mb-2">{t('operations.dailyLog.nutrientsAdded')}</label>
                 <input
                   type="text"
                   value={nutrientsAdded}
                   onChange={(e) => setNutrientsAdded(e.target.value)}
-                  placeholder="10ml CalMag, 15ml Bloom"
+                  placeholder={t('operations.dailyLog.nutrientsPh')}
                   className="w-full bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                 />
               </div>
@@ -488,13 +490,13 @@ export function DailyLogEntryModal({
           {/* Tasks Performed */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white">Tasks Performed</h3>
+              <h3 className="text-white">{t('operations.dailyLog.tasksPerformed')}</h3>
               <button
                 onClick={addTask}
                 className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
               >
                 <Plus className="w-4 h-4" />
-                Add Task
+                {t('operations.dailyLog.addTask')}
               </button>
             </div>
             <div className="space-y-2">
@@ -504,7 +506,7 @@ export function DailyLogEntryModal({
                     type="text"
                     value={task.task}
                     onChange={(e) => updateTask(index, e.target.value)}
-                    placeholder="e.g., Adjusted pH to 6.0"
+                    placeholder={t('operations.dailyLog.taskPh')}
                     className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                   />
                   <button
@@ -521,13 +523,13 @@ export function DailyLogEntryModal({
           {/* Issues */}
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-white">Issues</h3>
+              <h3 className="text-white">{t('operations.dailyLog.issues')}</h3>
               <button
                 onClick={addIssue}
                 className="flex items-center gap-1 text-xs text-green-400 hover:text-green-300"
               >
                 <Plus className="w-4 h-4" />
-                Add Issue
+                {t('operations.dailyLog.addIssue')}
               </button>
             </div>
             <div className="space-y-3">
@@ -542,16 +544,16 @@ export function DailyLogEntryModal({
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
-                        <SelectItem value="low" className={OPS_SELECT_ITEM}>Low</SelectItem>
-                        <SelectItem value="medium" className={OPS_SELECT_ITEM}>Medium</SelectItem>
-                        <SelectItem value="high" className={OPS_SELECT_ITEM}>High</SelectItem>
+                        <SelectItem value="low" className={OPS_SELECT_ITEM}>{t('severity.low')}</SelectItem>
+                        <SelectItem value="medium" className={OPS_SELECT_ITEM}>{t('severity.medium')}</SelectItem>
+                        <SelectItem value="high" className={OPS_SELECT_ITEM}>{t('severity.high')}</SelectItem>
                       </SelectContent>
                     </Select>
                     <input
                       type="text"
                       value={issue.description}
                       onChange={(e) => updateIssue(index, { description: e.target.value })}
-                      placeholder="Describe the issue..."
+                      placeholder={t('operations.dailyLog.issuePh')}
                       className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                     />
                     <button
@@ -568,7 +570,7 @@ export function DailyLogEntryModal({
                       onChange={(e) => updateIssue(index, { resolved: e.target.checked })}
                       className="rounded"
                     />
-                    Resolved
+                    {t('operations.dailyLog.resolved')}
                   </label>
                 </div>
               ))}
@@ -577,11 +579,11 @@ export function DailyLogEntryModal({
 
           {/* Experiment Notes */}
           <div>
-            <label className="block text-sm text-white/70 mb-2">Experiment Notes (Optional)</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.dailyLog.experimentNotes')}</label>
             <textarea
               value={experimentNotes}
               onChange={(e) => setExperimentNotes(e.target.value)}
-              placeholder="Notes specific to hypothesis being tested..."
+              placeholder={t('operations.dailyLog.experimentPh')}
               rows={2}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50 resize-none"
             />
@@ -591,18 +593,18 @@ export function DailyLogEntryModal({
           <div>
             <div className="flex items-center justify-between mb-3">
               <div>
-                <h3 className="text-white">Photos (0-5)</h3>
+                <h3 className="text-white">{t('operations.dailyLog.photos')}</h3>
                 <p className="text-xs text-white/40 mt-1">
-                  {totalPhotoCount}/5 photos
+                  {totalPhotoCount}/5 {t('operations.dailyLog.photosCount')}
                   {photos.length > 0 && (
-                    <> • {formatBytes(photos.reduce((sum, p) => sum + p.file.size, 0))} new</>
+                    <> • {formatBytes(photos.reduce((sum, p) => sum + p.file.size, 0))} {t('operations.dailyLog.new')}</>
                   )}
                 </p>
               </div>
               {totalPhotoCount < 5 && (
                 <label className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white cursor-pointer transition-all">
                   <Upload className="w-4 h-4" />
-                  Upload
+                  {t('operations.dailyLog.upload')}
                   <input
                     type="file"
                     accept="image/*"
@@ -615,7 +617,7 @@ export function DailyLogEntryModal({
             </div>
 
             {loadingExistingPhotos && isEditing && (
-              <p className="text-sm text-white/40 mb-3">Loading saved photos...</p>
+              <p className="text-sm text-white/40 mb-3">{t('operations.dailyLog.loadingPhotos')}</p>
             )}
 
             {(visibleExistingPhotos.length > 0 || photos.length > 0) && (
@@ -630,14 +632,14 @@ export function DailyLogEntryModal({
                       />
                     ) : (
                       <div className="w-full h-32 flex items-center justify-center bg-white/5 text-white/30 text-xs">
-                        No preview
+                        {t('operations.dailyLog.noPreview')}
                       </div>
                     )}
                     <button
                       type="button"
                       onClick={() => removeExistingPhoto(photo.id)}
                       className="absolute top-2 right-2 bg-red-500/80 hover:bg-red-500 rounded-full p-1 transition-colors"
-                      title="Remove photo"
+                      title={t('operations.dailyLog.removePhoto')}
                     >
                       <X className="w-4 h-4 text-white" />
                     </button>
@@ -645,7 +647,7 @@ export function DailyLogEntryModal({
                       {photo.caption && (
                         <p className="text-xs text-white/70 truncate">{photo.caption}</p>
                       )}
-                      <div className="text-xs text-white/40 mt-1">Saved</div>
+                      <div className="text-xs text-white/40 mt-1">{t('operations.dailyLog.saved')}</div>
                     </div>
                   </div>
                 ))}
@@ -668,11 +670,11 @@ export function DailyLogEntryModal({
                         type="text"
                         value={photo.caption}
                         onChange={(e) => updatePhotoCaption(index, e.target.value)}
-                        placeholder="Caption (optional)"
+                        placeholder={t('operations.dailyLog.captionPh')}
                         className="w-full bg-white/5 border border-white/10 rounded px-2 py-1 text-xs text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
                       />
                       <div className="text-xs text-green-400/70 mt-1">
-                        New • {formatBytes(photo.file.size)}
+                        {t('operations.dailyLog.new')} • {formatBytes(photo.file.size)}
                       </div>
                     </div>
                   </div>
@@ -683,10 +685,10 @@ export function DailyLogEntryModal({
             {totalPhotoCount === 0 && !loadingExistingPhotos && (
               <div className="border-2 border-dashed border-white/10 rounded-xl p-8 text-center">
                 <ImageIcon className="w-12 h-12 text-white/20 mx-auto mb-3" />
-                <p className="text-sm text-white/40 mb-3">No photos added yet</p>
+                <p className="text-sm text-white/40 mb-3">{t('operations.dailyLog.noPhotos')}</p>
                 <label className="inline-flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg px-4 py-2 text-sm text-white cursor-pointer transition-all">
                   <Upload className="w-4 h-4" />
-                  Choose Photos
+                  {t('operations.dailyLog.choosePhotos')}
                   <input
                     type="file"
                     accept="image/*"
@@ -706,7 +708,7 @@ export function DailyLogEntryModal({
             onClick={handleClose}
             className="text-xs text-white/60 hover:text-white transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
 
           <button
@@ -716,7 +718,7 @@ export function DailyLogEntryModal({
               !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {saving ? 'Saving...' : isEditing ? 'Save Changes' : 'Save Log'}
+            {saving ? t('operations.dailyLog.saving') : isEditing ? t('operations.dailyLog.saveChanges') : t('operations.dailyLog.saveLog')}
           </button>
         </div>
       </div>

@@ -1,11 +1,12 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
+import { appExtraEn, appExtraEs } from './translations/appExtra';
 
 type Language = 'es' | 'en';
 
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: string) => string;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
@@ -13,7 +14,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguage] = useState<Language>('es');
 
-  const t = (key: string): string => {
+  const t = (key: string, vars?: Record<string, string | number>): string => {
     const keys = key.split('.');
     let value: any = translations[language];
 
@@ -21,7 +22,13 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
       value = value?.[k];
     }
 
-    return value || key;
+    let result = typeof value === 'string' ? value : key;
+    if (vars) {
+      for (const [k, v] of Object.entries(vars)) {
+        result = result.replace(new RegExp(`\\{${k}\\}`, 'g'), String(v));
+      }
+    }
+    return result;
   };
 
   return (
@@ -489,7 +496,9 @@ const translations = {
       operations: 'Operaciones',
       learn: 'Aprender',
       about: 'Acerca de',
+      language: 'Idioma',
     },
+    ...appExtraEs,
   },
   en: {
     currency: 'MXN',
@@ -940,6 +949,8 @@ const translations = {
       operations: 'Operations',
       learn: 'Learn',
       about: 'About',
+      language: 'Language',
     },
+    ...appExtraEn,
   },
 };

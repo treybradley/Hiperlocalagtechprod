@@ -136,7 +136,7 @@ export function TopNavigation({ mode, onModeChange }: TopNavigationProps) {
 
           <div className="mt-auto px-5 py-5 border-t border-white/10 space-y-4">
             <div>
-              <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">Language</p>
+              <p className="text-white/40 text-[10px] uppercase tracking-wider mb-2">{t('nav.language')}</p>
               <LanguageToggle />
             </div>
 
@@ -148,7 +148,7 @@ export function TopNavigation({ mode, onModeChange }: TopNavigationProps) {
                   className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-white/50 hover:text-red-400 hover:bg-red-500/5 transition-all text-sm text-left"
                 >
                   <LogOut className="w-4 h-4" />
-                  Sign out
+                  {t('auth.signOut')}
                 </button>
               </div>
             ) : (
@@ -156,7 +156,7 @@ export function TopNavigation({ mode, onModeChange }: TopNavigationProps) {
                 onClick={() => { setMenuOpen(false); openAuthModal(); }}
                 className="w-full px-4 py-2.5 text-[13px] text-white/70 hover:text-white bg-white/5 border border-white/10 rounded-full transition-all"
               >
-                Sign in
+                {t('auth.signIn')}
               </button>
             )}
           </div>

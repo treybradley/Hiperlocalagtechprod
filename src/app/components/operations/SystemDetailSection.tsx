@@ -56,7 +56,7 @@ export function SystemDetailSection({
     return (
       <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
         <div className="flex items-center justify-center h-full">
-          <div className="text-white/60">Loading system...</div>
+          <div className="text-white/60">{t('operations.system.loading')}</div>
         </div>
       </div>
     );
@@ -66,7 +66,7 @@ export function SystemDetailSection({
     return (
       <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
         <div className="flex items-center justify-center h-full">
-          <div className="text-white/60">System not found</div>
+          <div className="text-white/60">{t('operations.system.notFound')}</div>
         </div>
       </div>
     );
@@ -76,15 +76,16 @@ export function SystemDetailSection({
   const completedCycles = cycles.filter(c => c.status === 'completed').length;
 
   const getStageLabel = (stage: string) => {
-    const labels: Record<string, string> = {
-      germination: 'Germination',
-      rootDevelopment: 'Root Dev.',
-      vegetativeGrowth: 'Vegetative',
-      flowering: 'Flowering',
-      harvest: 'Harvest',
-      completed: 'Completed',
+    const keys: Record<string, string> = {
+      germination: 'stages.germination',
+      rootDevelopment: 'stages.rootDevShort',
+      vegetativeGrowth: 'stages.vegetativeShort',
+      flowering: 'stages.flowering',
+      harvest: 'stages.harvest',
+      completed: 'stages.completed',
     };
-    return labels[stage] || stage;
+    const key = keys[stage];
+    return key ? t(key) : stage;
   };
 
   const getStatusColor = (status: string) => {
@@ -117,7 +118,7 @@ export function SystemDetailSection({
               className="flex items-center gap-2 text-xs font-light text-white/60 hover:text-white transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to Systems
+              {t('operations.system.back')}
             </button>
 
             <div>
@@ -132,22 +133,22 @@ export function SystemDetailSection({
                     ? 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30'
                     : 'bg-white/10 text-white/60 border-white/20'
                 }`}>
-                  {system.status}
+                  {t(`status.${system.status}`) !== `status.${system.status}` ? t(`status.${system.status}`) : system.status}
                 </div>
               </div>
               <div className="flex items-center gap-3 text-xs text-white/60">
-                <span>{SYSTEM_TYPE_LABELS[system.systemType] ?? system.systemType}</span>
+                <span>{t(`systemTypes.${system.systemType}`) !== `systemTypes.${system.systemType}` ? t(`systemTypes.${system.systemType}`) : (SYSTEM_TYPE_LABELS[system.systemType] ?? system.systemType)}</span>
                 <span>•</span>
                 <span>{system.location}</span>
                 <span>•</span>
-                <span>{system.capacity.totalPlants} plants</span>
+                <span>{system.capacity.totalPlants} {t('common.plants')}</span>
               </div>
             </div>
 
             {/* Hypothesis */}
             {system.hypothesis && (
               <div className="mt-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-                <h3 className="text-sm text-white/50 uppercase tracking-wider mb-2">Hypothesis</h3>
+                <h3 className="text-sm text-white/50 uppercase tracking-wider mb-2">{t('operations.system.hypothesis')}</h3>
                 <p className="text-white/90">{system.hypothesis}</p>
                 {system.variables.length > 0 && (
                   <div className="mt-4 space-y-2">
@@ -157,7 +158,7 @@ export function SystemDetailSection({
                         <span className="text-green-400">{v.value}</span>
                         {v.controlValue && (
                           <>
-                            <span className="text-white/40">vs</span>
+                            <span className="text-white/40">{t('common.vs')}</span>
                             <span className="text-white/60">{v.controlValue}</span>
                           </>
                         )}
@@ -180,7 +181,7 @@ export function SystemDetailSection({
                     : 'text-white/60 hover:text-white/80'
                 }`}
               >
-                Overview
+                {t('operations.system.overview')}
               </button>
               <button
                 onClick={() => setActiveTab('costs')}
@@ -190,7 +191,7 @@ export function SystemDetailSection({
                     : 'text-white/60 hover:text-white/80'
                 }`}
               >
-                Costs
+                {t('operations.system.costs')}
               </button>
               <button
                 onClick={() => setActiveTab('results')}
@@ -200,7 +201,7 @@ export function SystemDetailSection({
                     : 'text-white/60 hover:text-white/80'
                 }`}
               >
-                Results
+                {t('operations.system.results')}
               </button>
             </div>
           </div>
@@ -213,54 +214,54 @@ export function SystemDetailSection({
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <TrendingUp className="w-5 h-5 text-green-400" />
-                <span className="text-sm text-white/60">Total Cycles</span>
+                <span className="text-sm text-white/60">{t('operations.system.totalCycles')}</span>
               </div>
               <div className="text-3xl text-white">{system.totalCycles}</div>
-              <div className="text-xs text-white/40 mt-1">{completedCycles} completed</div>
+              <div className="text-xs text-white/40 mt-1">{completedCycles} {t('operations.system.completed')}</div>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Activity className="w-5 h-5 text-green-400" />
-                <span className="text-sm text-white/60">Active Cycle</span>
+                <span className="text-sm text-white/60">{t('operations.system.activeCycle')}</span>
               </div>
               {activeCycle ? (
                 <>
                   <div className="text-lg text-white line-clamp-1">{activeCycle.cropType}</div>
                   <div className="text-xs text-white/40 mt-1">
-                    Day {getDaysSince(activeCycle.seedDate)} • {getStageLabel(activeCycle.currentStage)}
+                    {t('operations.system.day')} {getDaysSince(activeCycle.seedDate)} • {getStageLabel(activeCycle.currentStage)}
                   </div>
                 </>
               ) : (
-                <div className="text-white/40">No active cycle</div>
+                <div className="text-white/40">{t('operations.system.noActiveCycle')}</div>
               )}
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <Calendar className="w-5 h-5 text-green-400" />
-                <span className="text-sm text-white/60">Total Harvest</span>
+                <span className="text-sm text-white/60">{t('operations.system.totalHarvest')}</span>
               </div>
               <div className="text-3xl text-white">
                 {system.results?.totalHarvestKg.toFixed(1) || '0.0'}
-                <span className="text-lg text-white/40 ml-1">kg</span>
+                <span className="text-lg text-white/40 ml-1">{t('common.kg')}</span>
               </div>
               <div className="text-xs text-white/40 mt-1">
-                ${system.results?.totalRevenue.toLocaleString() || '0'} revenue
+                ${system.results?.totalRevenue.toLocaleString() || '0'} {t('operations.system.revenue')}
               </div>
             </div>
 
             <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-2">
                 <TrendingUp className="w-5 h-5 text-green-400" />
-                <span className="text-sm text-white/60">ROI</span>
+                <span className="text-sm text-white/60">{t('common.roi')}</span>
               </div>
               <div className="text-3xl text-green-400">
                 {system.results?.roi.toFixed(1) || '0'}
                 <span className="text-lg">%</span>
               </div>
               <div className="text-xs text-white/40 mt-1">
-                {system.results?.successRate.toFixed(0) || '0'}% success rate
+                {system.results?.successRate.toFixed(0) || '0'}% {t('operations.system.successRate')}
               </div>
             </div>
           </div>
@@ -268,13 +269,13 @@ export function SystemDetailSection({
           {/* Grow Cycles List */}
           <div className="flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl text-white">Grow Cycles</h2>
+              <h2 className="text-2xl text-white">{t('operations.system.growCycles')}</h2>
               <button
                 onClick={onStartCycle}
                 className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-md sm:px-5 sm:py-2 p-2 transition-all duration-300"
               >
                 <Plus className="w-4 h-4 text-green-400 shrink-0" />
-                <span className="text-white text-sm hidden sm:inline">Start New Cycle</span>
+                <span className="text-white text-sm hidden sm:inline">{t('operations.system.startNewCycle')}</span>
               </button>
             </div>
 
@@ -283,14 +284,14 @@ export function SystemDetailSection({
                 <div className="w-16 h-16 mx-auto mb-4 bg-green-500/10 rounded-2xl flex items-center justify-center">
                   <Activity className="w-8 h-8 text-green-400/50" />
                 </div>
-                <h3 className="text-xl text-white mb-2">No Cycles Yet</h3>
-                <p className="text-white/60 mb-6">Start your first grow cycle to begin tracking</p>
+                <h3 className="text-xl text-white mb-2">{t('operations.system.noCyclesTitle')}</h3>
+                <p className="text-white/60 mb-6">{t('operations.system.noCyclesBody')}</p>
                 <button
                   onClick={onStartCycle}
                   className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-6 py-3 transition-all duration-300"
                 >
                   <Plus className="w-5 h-5 text-green-400" />
-                  <span className="text-white">Start First Cycle</span>
+                  <span className="text-white">{t('operations.system.startFirstCycle')}</span>
                 </button>
               </div>
             ) : (
@@ -309,37 +310,37 @@ export function SystemDetailSection({
                         <p className="text-sm text-white/60">{cycle.cropType}</p>
                       </div>
                       <div className={`px-3 py-1 rounded-full text-xs border ${getStatusColor(cycle.status)}`}>
-                        {cycle.status}
+                        {t(`status.${cycle.status}`) !== `status.${cycle.status}` ? t(`status.${cycle.status}`) : cycle.status}
                       </div>
                     </div>
 
                     <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                       <div>
-                        <div className="text-xs text-white/40 mb-1">Stage</div>
+                        <div className="text-xs text-white/40 mb-1">{t('operations.system.stage')}</div>
                         <div className="text-sm text-white">{getStageLabel(cycle.currentStage)}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-white/40 mb-1">Duration</div>
+                        <div className="text-xs text-white/40 mb-1">{t('operations.system.duration')}</div>
                         <div className="text-sm text-white">
                           {cycle.status === 'completed' && cycle.cycleResults
-                            ? `${cycle.cycleResults.cycleDuration} days`
-                            : `Day ${getDaysSince(cycle.seedDate)}`
+                            ? `${cycle.cycleResults.cycleDuration} ${t('operations.system.days')}`
+                            : `${t('operations.system.day')} ${getDaysSince(cycle.seedDate)}`
                           }
                         </div>
                       </div>
                       <div>
-                        <div className="text-xs text-white/40 mb-1">Plants</div>
+                        <div className="text-xs text-white/40 mb-1">{t('operations.system.plants')}</div>
                         <div className="text-sm text-white">{cycle.currentPlantCount}</div>
                       </div>
                       <div>
-                        <div className="text-xs text-white/40 mb-1">Logs</div>
+                        <div className="text-xs text-white/40 mb-1">{t('operations.system.logs')}</div>
                         <div className="text-sm text-white">{cycle.dailyLogCount}</div>
                       </div>
                     </div>
 
                     {cycle.status === 'completed' && cycle.totalHarvestKg && (
                       <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-                        <span className="text-sm text-white/60">Harvest: {cycle.totalHarvestKg.toFixed(1)} kg</span>
+                        <span className="text-sm text-white/60">{t('operations.system.harvest')} {cycle.totalHarvestKg.toFixed(1)} {t('common.kg')}</span>
                         {cycle.harvestRevenue && (
                           <span className="text-sm text-green-400">${cycle.harvestRevenue.toLocaleString()}</span>
                         )}
@@ -347,9 +348,9 @@ export function SystemDetailSection({
                     )}
 
                     <div className="mt-4 pt-4 border-t border-white/10 flex items-center justify-between">
-                      <span className="text-xs text-white/40">Started {formatDate(cycle.seedDate)}</span>
+                      <span className="text-xs text-white/40">{t('operations.system.started')} {formatDate(cycle.seedDate)}</span>
                       <span className="text-xs text-green-400 opacity-0 group-hover:opacity-100 transition-opacity">
-                        View Details →
+                        {t('operations.system.viewDetails')}
                       </span>
                     </div>
                   </div>

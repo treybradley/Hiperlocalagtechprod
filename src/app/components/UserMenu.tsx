@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { LogOut, ChevronDown } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 export function UserMenu() {
   const { user, session, signOut, openAuthModal } = useAuth();
+  const { t } = useLanguage();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -21,7 +23,7 @@ export function UserMenu() {
         onClick={() => openAuthModal()}
         className="px-3 py-1.5 text-[12px] text-white/70 hover:text-white bg-white/5 border border-white/10 rounded-full transition-all"
       >
-        Sign in
+        {t('auth.signIn')}
       </button>
     );
   }
@@ -51,7 +53,7 @@ export function UserMenu() {
             className="w-full flex items-center gap-3 px-4 py-2.5 text-white/50 hover:text-red-400 hover:bg-red-500/5 transition-all text-sm text-left"
           >
             <LogOut className="w-4 h-4" />
-            Sign out
+            {t('auth.signOut')}
           </button>
         </div>
       )}

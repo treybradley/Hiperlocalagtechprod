@@ -1,5 +1,6 @@
 import { TrendingUp, Target, Calendar, Award, AlertCircle, Lightbulb, DollarSign, BarChart3, Clock } from 'lucide-react';
 import { HydroponicSystem, GrowCycle } from '../../../storage/models';
+import { useLanguage } from '../../contexts/LanguageContext';
 
 interface SystemResultsTabProps {
   system: HydroponicSystem;
@@ -11,6 +12,7 @@ function fmt(n: number) {
 }
 
 export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
+  const { t } = useLanguage();
   const completedCycles = cycles.filter(c => c.status === 'completed');
   const hasResults = completedCycles.length > 0;
 
@@ -20,9 +22,9 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
         <div className="w-16 h-16 mx-auto mb-4 bg-green-500/10 rounded-2xl flex items-center justify-center">
           <TrendingUp className="w-8 h-8 text-green-400/50" />
         </div>
-        <h2 className="text-2xl text-white mb-3">No Results Yet</h2>
+        <h2 className="text-2xl text-white mb-3">{t('operations.results.noResultsTitle')}</h2>
         <p className="text-white/60 mb-6">
-          Complete your first grow cycle to see results and financial projections
+          {t('operations.results.noResultsBody')}
         </p>
       </div>
     );
@@ -99,37 +101,37 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <TrendingUp className="w-4 h-4 text-green-400" />
-            <span className="text-xs text-white/60">Total Harvest</span>
+            <span className="text-xs text-white/60">{t('operations.results.totalHarvest')}</span>
           </div>
-          <div className="text-3xl text-white">{totalHarvestKg.toFixed(1)}<span className="text-base text-white/40 ml-1">kg</span></div>
-          <div className="text-xs text-white/40 mt-1">{completedCycles.length} cycles completed</div>
+          <div className="text-3xl text-white">{totalHarvestKg.toFixed(1)}<span className="text-base text-white/40 ml-1">{t('common.kg')}</span></div>
+          <div className="text-xs text-white/40 mt-1">{completedCycles.length} {t('operations.results.cyclesCompleted')}</div>
         </div>
 
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <DollarSign className="w-4 h-4 text-green-400" />
-            <span className="text-xs text-white/60">Total Revenue</span>
+            <span className="text-xs text-white/60">{t('operations.results.totalRevenue')}</span>
           </div>
           <div className="text-3xl text-white">${totalRevenue.toLocaleString()}</div>
-          <div className="text-xs text-white/40 mt-1">${fmt(avgCycleRevenue)} avg/cycle</div>
+          <div className="text-xs text-white/40 mt-1">${fmt(avgCycleRevenue)} {t('operations.results.avgPerCycle')}</div>
         </div>
 
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <Calendar className="w-4 h-4 text-green-400" />
-            <span className="text-xs text-white/60">Avg Cycle</span>
+            <span className="text-xs text-white/60">{t('operations.results.avgCycle')}</span>
           </div>
-          <div className="text-3xl text-white">{avgCycleDays.toFixed(0)}<span className="text-base text-white/40 ml-1">days</span></div>
-          <div className="text-xs text-white/40 mt-1">{cyclesPerYear.toFixed(1)} cycles/year potential</div>
+          <div className="text-3xl text-white">{avgCycleDays.toFixed(0)}<span className="text-base text-white/40 ml-1">{t('common.days')}</span></div>
+          <div className="text-xs text-white/40 mt-1">{cyclesPerYear.toFixed(1)} {t('operations.results.cyclesYearPotential')}</div>
         </div>
 
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-5">
           <div className="flex items-center gap-2 mb-2">
             <Award className="w-4 h-4 text-green-400" />
-            <span className="text-xs text-white/60">Success Rate</span>
+            <span className="text-xs text-white/60">{t('operations.results.successRate')}</span>
           </div>
           <div className="text-3xl text-white">{successRate.toFixed(0)}<span className="text-base text-white/40 ml-1">%</span></div>
-          <div className="text-xs text-white/40 mt-1">{completedCycles.length} of {cycles.length} cycles</div>
+          <div className="text-xs text-white/40 mt-1">{completedCycles.length} {t('operations.results.ofCycles')} {cycles.length} {t('operations.results.cycles')}</div>
         </div>
       </div>
 
@@ -138,22 +140,22 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
         <div className="sm:col-span-2 bg-gradient-to-br from-green-500/20 to-green-500/5 backdrop-blur-sm border border-green-500/30 rounded-2xl p-6">
           <div className="flex items-start justify-between mb-4">
             <div>
-              <div className="text-xs text-white/50 uppercase tracking-wider mb-1">Return on Investment</div>
+              <div className="text-xs text-white/50 uppercase tracking-wider mb-1">{t('operations.results.roi')}</div>
               <div className="text-5xl text-green-400">{roi.toFixed(1)}<span className="text-2xl">%</span></div>
             </div>
             <TrendingUp className="w-10 h-10 text-green-400/30" />
           </div>
           <div className="grid grid-cols-3 gap-4 pt-4 border-t border-white/10">
             <div>
-              <div className="text-xs text-white/40 mb-1">Capital Invested</div>
+              <div className="text-xs text-white/40 mb-1">{t('operations.results.capitalInvested')}</div>
               <div className="text-white">${capitalCost.toLocaleString()}</div>
             </div>
             <div>
-              <div className="text-xs text-white/40 mb-1">Total Revenue</div>
+              <div className="text-xs text-white/40 mb-1">{t('operations.results.totalRevenue')}</div>
               <div className="text-white">${totalRevenue.toLocaleString()}</div>
             </div>
             <div>
-              <div className="text-xs text-white/40 mb-1">Net Profit</div>
+              <div className="text-xs text-white/40 mb-1">{t('operations.results.netProfit')}</div>
               <div className={totalProfit >= 0 ? 'text-green-400' : 'text-red-400'}>${fmt(totalProfit)}</div>
             </div>
           </div>
@@ -163,28 +165,28 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-4 h-4 text-blue-400" />
-              <span className="text-xs text-white/60 uppercase tracking-wider">Payback Period</span>
+              <span className="text-xs text-white/60 uppercase tracking-wider">{t('operations.results.paybackPeriod')}</span>
             </div>
             {paybackYears !== null ? (
               <>
                 <div className="text-4xl text-white mb-1">
                   {paybackYears < 1 ? paybackMonths!.toFixed(1) : paybackYears.toFixed(1)}
                   <span className="text-lg text-white/40 ml-1">
-                    {paybackYears < 1 ? 'mo' : 'yr'}
+                    {paybackYears < 1 ? t('common.mo') : t('common.yr')}
                   </span>
                 </div>
                 <div className="text-sm text-white/50">
                   {paybackYears < 1
-                    ? `${paybackMonths!.toFixed(1)} months to break even`
-                    : `${paybackYears.toFixed(1)} years (${paybackMonths!.toFixed(0)} mo)`}
+                    ? `${paybackMonths!.toFixed(1)} ${t('operations.results.monthsToBreakEven')}`
+                    : `${paybackYears.toFixed(1)} ${t('common.years')} (${paybackMonths!.toFixed(0)} ${t('common.mo')})`}
                 </div>
               </>
             ) : (
-              <div className="text-white/40 text-sm">Insufficient data</div>
+              <div className="text-white/40 text-sm">{t('operations.results.insufficientData')}</div>
             )}
           </div>
           <div className="pt-4 border-t border-white/10">
-            <div className="text-xs text-white/40 mb-1">Based on ${fmt(monthlyProfit)}/mo profit</div>
+            <div className="text-xs text-white/40 mb-1">{t('operations.results.basedOnProfit', { amount: fmt(monthlyProfit) })}</div>
           </div>
         </div>
       </div>
@@ -193,27 +195,27 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-5">
           <BarChart3 className="w-5 h-5 text-green-400" />
-          <h3 className="text-lg text-white">Annual Projection</h3>
-          <span className="text-xs text-white/40 ml-auto">Based on {cyclesPerYear.toFixed(1)} cycles/year @ current performance</span>
+          <h3 className="text-lg text-white">{t('operations.results.annualProjection')}</h3>
+          <span className="text-xs text-white/40 ml-auto">{t('operations.results.basedOnCycles', { n: cyclesPerYear.toFixed(1) })}</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div className="bg-white/5 rounded-xl p-4">
-            <div className="text-xs text-white/40 mb-2">Annual Revenue</div>
+            <div className="text-xs text-white/40 mb-2">{t('operations.results.annualRevenue')}</div>
             <div className="text-2xl text-green-400">${Math.round(annualRevenue).toLocaleString()}</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4">
-            <div className="text-xs text-white/40 mb-2">Annual Costs</div>
+            <div className="text-xs text-white/40 mb-2">{t('operations.results.annualCosts')}</div>
             <div className="text-2xl text-white">${Math.round(annualTotalCost).toLocaleString()}</div>
-            <div className="text-xs text-white/30 mt-1">Op: ${Math.round(annualOpCost).toLocaleString()} + Cycle: ${Math.round(annualCycleCost).toLocaleString()}</div>
+            <div className="text-xs text-white/30 mt-1">{t('operations.results.opPlusCycle', { op: Math.round(annualOpCost).toLocaleString(), cycle: Math.round(annualCycleCost).toLocaleString() })}</div>
           </div>
           <div className="bg-white/5 rounded-xl p-4">
-            <div className="text-xs text-white/40 mb-2">Annual Profit</div>
+            <div className="text-xs text-white/40 mb-2">{t('operations.results.annualProfit')}</div>
             <div className={`text-2xl ${annualProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               ${Math.round(annualProfit).toLocaleString()}
             </div>
           </div>
           <div className="bg-white/5 rounded-xl p-4">
-            <div className="text-xs text-white/40 mb-2">Profit Margin</div>
+            <div className="text-xs text-white/40 mb-2">{t('operations.results.profitMargin')}</div>
             <div className={`text-2xl ${annualProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               {annualRevenue > 0 ? ((annualProfit / annualRevenue) * 100).toFixed(1) : '0'}%
             </div>
@@ -225,22 +227,22 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
         <div className="flex items-center gap-3 mb-5">
           <DollarSign className="w-5 h-5 text-green-400" />
-          <h3 className="text-lg text-white">Monthly P&L</h3>
-          <span className="text-xs text-white/40 ml-auto">Projected from actuals</span>
+          <h3 className="text-lg text-white">{t('operations.results.monthlyPnL')}</h3>
+          <span className="text-xs text-white/40 ml-auto">{t('operations.results.projectedFromActuals')}</span>
         </div>
 
         {/* Summary row */}
         <div className="grid grid-cols-3 gap-4 mb-5 p-4 bg-white/5 rounded-xl">
           <div>
-            <div className="text-xs text-white/40 mb-1">Avg Monthly Revenue</div>
+            <div className="text-xs text-white/40 mb-1">{t('operations.results.avgMonthlyRevenue')}</div>
             <div className="text-xl text-green-400">${fmt(monthlyRevenue)}</div>
           </div>
           <div>
-            <div className="text-xs text-white/40 mb-1">Avg Monthly Cost</div>
+            <div className="text-xs text-white/40 mb-1">{t('operations.results.avgMonthlyCost')}</div>
             <div className="text-xl text-white">${fmt(monthlyCost)}</div>
           </div>
           <div>
-            <div className="text-xs text-white/40 mb-1">Avg Monthly Profit</div>
+            <div className="text-xs text-white/40 mb-1">{t('operations.results.avgMonthlyProfit')}</div>
             <div className={`text-xl ${monthlyProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>${fmt(monthlyProfit)}</div>
           </div>
         </div>
@@ -269,8 +271,8 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
             );
           })}
           <div className="flex items-center gap-4 pt-2 text-xs text-white/30">
-            <span className="flex items-center gap-1"><span className="w-3 h-1.5 bg-green-500/60 rounded-full inline-block" /> Revenue</span>
-            <span className="flex items-center gap-1"><span className="w-3 h-1.5 bg-red-500/40 rounded-full inline-block" /> Cost</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-1.5 bg-green-500/60 rounded-full inline-block" /> {t('common.revenue')}</span>
+            <span className="flex items-center gap-1"><span className="w-3 h-1.5 bg-red-500/40 rounded-full inline-block" /> {t('operations.costs.cost')}</span>
           </div>
         </div>
       </div>
@@ -280,23 +282,23 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <Award className="w-5 h-5 text-green-400" />
-            <h3 className="text-lg text-white">Best Performing Crop</h3>
+            <h3 className="text-lg text-white">{t('operations.results.bestCrop')}</h3>
           </div>
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
-              <div className="text-xs text-white/40 mb-1">Crop Type</div>
+              <div className="text-xs text-white/40 mb-1">{t('operations.results.cropType')}</div>
               <div className="text-xl text-white">{bestCrop[0]}</div>
             </div>
             <div>
-              <div className="text-xs text-white/40 mb-1">Total Harvest</div>
-              <div className="text-xl text-white">{bestCrop[1].totalKg.toFixed(1)} kg</div>
+              <div className="text-xs text-white/40 mb-1">{t('operations.results.totalHarvest')}</div>
+              <div className="text-xl text-white">{bestCrop[1].totalKg.toFixed(1)} {t('common.kg')}</div>
             </div>
             <div>
-              <div className="text-xs text-white/40 mb-1">Cycles</div>
+              <div className="text-xs text-white/40 mb-1">{t('operations.results.cycles')}</div>
               <div className="text-xl text-white">{bestCrop[1].count}</div>
             </div>
             <div>
-              <div className="text-xs text-white/40 mb-1">Revenue</div>
+              <div className="text-xs text-white/40 mb-1">{t('common.revenue')}</div>
               <div className="text-xl text-green-400">${bestCrop[1].revenue.toLocaleString()}</div>
             </div>
           </div>
@@ -308,17 +310,17 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
           <div className="flex items-center gap-3 mb-4">
             <Lightbulb className="w-5 h-5 text-yellow-400" />
-            <h3 className="text-lg text-white">Hypothesis Validation</h3>
+            <h3 className="text-lg text-white">{t('operations.results.hypothesisValidation')}</h3>
           </div>
           <div className="space-y-4">
             <div className="bg-white/5 rounded-xl p-4">
-              <div className="text-xs text-white/40 mb-2">Original Hypothesis</div>
+              <div className="text-xs text-white/40 mb-2">{t('operations.results.originalHypothesis')}</div>
               <p className="text-white">{system.hypothesis}</p>
             </div>
 
             {system.variables.length > 0 && (
               <div className="bg-white/5 rounded-xl p-4">
-                <div className="text-xs text-white/40 mb-3">Variables Tested</div>
+                <div className="text-xs text-white/40 mb-3">{t('operations.results.variablesTested')}</div>
                 <div className="space-y-2">
                   {system.variables.map((v, i) => (
                     <div key={i} className="flex items-center justify-between text-sm">
@@ -327,7 +329,7 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
                         <span className="text-green-400">{v.value}</span>
                         {v.controlValue && (
                           <>
-                            <span className="text-white/40">vs</span>
+                            <span className="text-white/40">{t('common.vs')}</span>
                             <span className="text-white/60">{v.controlValue}</span>
                           </>
                         )}
@@ -348,7 +350,7 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
                   </div>
                   <div className="flex-1">
                     <div className="text-sm text-white/60 mb-2">
-                      {system.results.wouldRecommend ? 'Hypothesis Validated' : 'Hypothesis Not Validated'}
+                      {system.results.wouldRecommend ? t('operations.results.validated') : t('operations.results.notValidated')}
                     </div>
                     <p className="text-white">{system.results.keyFindings}</p>
                   </div>
@@ -356,8 +358,8 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
               </div>
             ) : (
               <div className="bg-white/5 border border-white/10 rounded-xl p-6 text-center">
-                <p className="text-white/60 text-sm mb-2">Hypothesis validation pending</p>
-                <p className="text-xs text-white/40">Continue collecting data across more cycles</p>
+                <p className="text-white/60 text-sm mb-2">{t('operations.results.validationPending')}</p>
+                <p className="text-xs text-white/40">{t('operations.results.continueCollecting')}</p>
               </div>
             )}
           </div>
@@ -366,7 +368,7 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
 
       {/* ── Cycle Breakdown ───────────────────────────────────────────────────── */}
       <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
-        <h3 className="text-lg text-white mb-4">Cycle Performance Breakdown</h3>
+        <h3 className="text-lg text-white mb-4">{t('operations.results.cycleBreakdown')}</h3>
         <div className="space-y-3">
           {completedCycles.map((cycle) => (
             <div key={cycle.id} className="bg-white/5 rounded-xl p-4">
@@ -381,29 +383,29 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
                       ? 'bg-green-500/20 text-green-400 border border-green-500/30'
                       : 'bg-red-500/20 text-red-400 border border-red-500/30'
                   }`}>
-                    {cycle.cycleResults.success ? 'Success' : 'Failed'}
+                    {cycle.cycleResults.success ? t('operations.results.success') : t('operations.results.failed')}
                   </div>
                 )}
               </div>
               <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
                 <div>
-                  <div className="text-xs text-white/40 mb-1">Harvest</div>
-                  <div className="text-sm text-white">{cycle.totalHarvestKg?.toFixed(1) || 0} kg</div>
+                  <div className="text-xs text-white/40 mb-1">{t('operations.results.harvest')}</div>
+                  <div className="text-sm text-white">{cycle.totalHarvestKg?.toFixed(1) || 0} {t('common.kg')}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/40 mb-1">Duration</div>
-                  <div className="text-sm text-white">{cycle.cycleResults?.cycleDuration || 0} days</div>
+                  <div className="text-xs text-white/40 mb-1">{t('operations.results.duration')}</div>
+                  <div className="text-sm text-white">{cycle.cycleResults?.cycleDuration || 0} {t('common.days')}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/40 mb-1">Revenue</div>
+                  <div className="text-xs text-white/40 mb-1">{t('common.revenue')}</div>
                   <div className="text-sm text-white">${cycle.harvestRevenue?.toLocaleString() || 0}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/40 mb-1">Cost</div>
+                  <div className="text-xs text-white/40 mb-1">{t('operations.costs.cost')}</div>
                   <div className="text-sm text-white">${cycle.cycleResults?.totalCost?.toFixed(2) || 0}</div>
                 </div>
                 <div>
-                  <div className="text-xs text-white/40 mb-1">Profit Margin</div>
+                  <div className="text-xs text-white/40 mb-1">{t('operations.results.profitMargin')}</div>
                   <div className="text-sm text-green-400">
                     {((cycle.cycleResults?.profitMargin || 0) * 100).toFixed(1)}%
                   </div>
@@ -411,7 +413,7 @@ export function SystemResultsTab({ system, cycles }: SystemResultsTabProps) {
               </div>
               {cycle.cycleResults?.lessonsLearned && (
                 <div className="mt-3 pt-3 border-t border-white/10">
-                  <div className="text-xs text-white/40 mb-1">Lessons Learned</div>
+                  <div className="text-xs text-white/40 mb-1">{t('operations.results.lessonsLearned')}</div>
                   <p className="text-sm text-white/70">{cycle.cycleResults.lessonsLearned}</p>
                 </div>
               )}

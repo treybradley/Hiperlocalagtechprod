@@ -85,7 +85,7 @@ export function GrowCycleDetailSection({
       await loadCycleData();
     } catch (error) {
       console.error('Failed to advance stage:', error);
-      alert('Failed to advance stage. Please try again.');
+      alert(t('operations.cycle.failedAdvance'));
     }
   };
 
@@ -108,7 +108,7 @@ export function GrowCycleDetailSection({
       onBack();
     } catch (error) {
       console.error('Failed to delete grow cycle:', error);
-      alert('Failed to delete grow cycle. Please try again.');
+      alert(t('operations.cycle.failedDeleteCycle'));
     } finally {
       setDeleting(false);
     }
@@ -123,7 +123,7 @@ export function GrowCycleDetailSection({
       await loadCycleData();
     } catch (error) {
       console.error('Failed to delete daily log:', error);
-      alert('Failed to delete daily log. Please try again.');
+      alert(t('operations.cycle.failedDeleteLog'));
     } finally {
       setDeleting(false);
     }
@@ -133,7 +133,7 @@ export function GrowCycleDetailSection({
     return (
       <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
         <div className="flex items-center justify-center h-full">
-          <div className="text-white/60">Loading cycle...</div>
+          <div className="text-white/60">{t('operations.cycle.loading')}</div>
         </div>
       </div>
     );
@@ -143,22 +143,23 @@ export function GrowCycleDetailSection({
     return (
       <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
         <div className="flex items-center justify-center h-full">
-          <div className="text-white/60">Cycle not found</div>
+          <div className="text-white/60">{t('operations.cycle.notFound')}</div>
         </div>
       </div>
     );
   }
 
   const getStageLabel = (stage: string) => {
-    const labels: Record<string, string> = {
-      germination: 'Germination',
-      rootDevelopment: 'Root Development',
-      vegetativeGrowth: 'Vegetative Growth',
-      flowering: 'Flowering',
-      harvest: 'Harvest',
-      completed: 'Completed',
+    const keys: Record<string, string> = {
+      germination: 'stages.germination',
+      rootDevelopment: 'stages.rootDevelopment',
+      vegetativeGrowth: 'stages.vegetativeGrowth',
+      flowering: 'stages.flowering',
+      harvest: 'stages.harvest',
+      completed: 'stages.completed',
     };
-    return labels[stage] || stage;
+    const key = keys[stage];
+    return key ? t(key) : stage;
   };
 
   const currentStageIndex = STAGE_ORDER.indexOf(cycle.currentStage as any);
@@ -181,7 +182,7 @@ export function GrowCycleDetailSection({
               className="flex items-center gap-2 text-xs font-light text-white/60 hover:text-white transition-colors mb-4"
             >
               <ArrowLeft className="w-4 h-4" />
-              Back to System
+              {t('operations.cycle.back')}
             </button>
 
             <div className="flex items-start justify-between">
@@ -192,7 +193,7 @@ export function GrowCycleDetailSection({
                 <div className="flex items-center gap-4 text-white/60">
                   <span>{cycle.cropType}</span>
                   <span>•</span>
-                  <span>Day {getDaysSince(cycle.seedDate)}</span>
+                  <span>{t('common.day')} {getDaysSince(cycle.seedDate)}</span>
                   <span>•</span>
                   <span className="text-green-400">{getStageLabel(cycle.currentStage)}</span>
                 </div>
@@ -204,14 +205,14 @@ export function GrowCycleDetailSection({
                   className="flex items-center gap-2 bg-white/5 hover:bg-white/10 border border-white/10 hover:border-white/20 rounded-full px-4 py-2 sm:py-3 text-sm text-white transition-all"
                 >
                   <Pencil className="w-4 h-4" />
-                  <span className="hidden sm:inline">Edit</span>
+                  <span className="hidden sm:inline">{t('operations.cycle.edit')}</span>
                 </button>
                 <button
                   onClick={() => setConfirmDeleteCycle(true)}
                   className="flex items-center gap-2 bg-red-500/10 hover:bg-red-500/20 border border-red-500/30 rounded-full px-[15px] py-2 sm:py-3 text-xs font-normal text-red-300 transition-all"
                 >
                   <Trash2 className="w-4 h-4" />
-                  <span className="hidden sm:inline">Delete</span>
+                  <span className="hidden sm:inline">{t('operations.cycle.delete')}</span>
                 </button>
                 {cycle.currentStage === 'harvest' && cycle.status === 'active' && (
                   <button
@@ -219,7 +220,7 @@ export function GrowCycleDetailSection({
                     className="flex items-center gap-2 bg-blue-500/20 hover:bg-blue-500/30 backdrop-blur-sm border border-blue-500/40 hover:border-blue-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group"
                   >
                     <CheckCircle className="w-5 h-5 text-blue-400" />
-                    <span className="text-white text-sm sm:text-base">Record Harvest</span>
+                    <span className="text-white text-sm sm:text-base">{t('operations.cycle.recordHarvest')}</span>
                   </button>
                 )}
                 <button
@@ -227,7 +228,7 @@ export function GrowCycleDetailSection({
                   className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-4 sm:px-6 py-2 sm:py-3 transition-all duration-300 group font-normal"
                 >
                   <Plus className="w-5 h-5 text-green-400" />
-                  <span className="text-white text-xs font-normal">Add Daily Log</span>
+                  <span className="text-white text-xs font-normal">{t('operations.cycle.addDailyLog')}</span>
                 </button>
               </div>
             </div>
@@ -236,13 +237,13 @@ export function GrowCycleDetailSection({
           {/* Stage Progress Timeline */}
           <div className="flex-shrink-0 bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg text-white">Growth Stage Progress</h3>
+              <h3 className="text-lg text-white">{t('operations.cycle.stageProgress')}</h3>
               {canAdvance && (
                 <button
                   onClick={handleAdvanceStage}
                   className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all"
                 >
-                  Advance to {getStageLabel(STAGE_ORDER[currentStageIndex + 1])}
+                  {t('operations.cycle.advanceTo')} {getStageLabel(STAGE_ORDER[currentStageIndex + 1])}
                   <ChevronRight className="w-4 h-4" />
                 </button>
               )}
@@ -301,12 +302,12 @@ export function GrowCycleDetailSection({
           {/* Metrics Overview */}
           {latestLog && (
             <div className="flex-shrink-0">
-              <h3 className="text-lg text-white mb-4">Current Metrics</h3>
+              <h3 className="text-lg text-white mb-4">{t('operations.cycle.currentMetrics')}</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Thermometer className="w-4 h-4 text-green-400" />
-                    <span className="text-xs text-white/60">Temp</span>
+                    <span className="text-xs text-white/60">{t('operations.cycle.temp')}</span>
                   </div>
                   <div className="text-2xl text-white">
                     {latestLog.environment.temperature?.toFixed(1) || '--'}°C
@@ -316,7 +317,7 @@ export function GrowCycleDetailSection({
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <Droplets className="w-4 h-4 text-green-400" />
-                    <span className="text-xs text-white/60">Humidity</span>
+                    <span className="text-xs text-white/60">{t('operations.cycle.humidity')}</span>
                   </div>
                   <div className="text-2xl text-white">
                     {latestLog.environment.humidity?.toFixed(0) || '--'}%
@@ -326,7 +327,7 @@ export function GrowCycleDetailSection({
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
                     <TrendingUp className="w-4 h-4 text-green-400" />
-                    <span className="text-xs text-white/60">pH</span>
+                    <span className="text-xs text-white/60">{t('operations.cycle.ph')}</span>
                   </div>
                   <div className="text-2xl text-white">
                     {latestLog.environment.ph?.toFixed(1) || '--'}
@@ -335,7 +336,7 @@ export function GrowCycleDetailSection({
 
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-white/60">EC</span>
+                    <span className="text-xs text-white/60">{t('operations.cycle.ec')}</span>
                   </div>
                   <div className="text-2xl text-white">
                     {latestLog.environment.ec?.toFixed(1) || '--'}
@@ -344,7 +345,7 @@ export function GrowCycleDetailSection({
 
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-white/60">Water T</span>
+                    <span className="text-xs text-white/60">{t('operations.cycle.waterT')}</span>
                   </div>
                   <div className="text-2xl text-white">
                     {latestLog.environment.waterTemp?.toFixed(1) || '--'}°C
@@ -353,7 +354,7 @@ export function GrowCycleDetailSection({
 
                 <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-xl p-4">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="text-xs text-white/60">Plant Health</span>
+                    <span className="text-xs text-white/60">{t('operations.cycle.plantHealth')}</span>
                   </div>
                   <div className={`text-lg capitalize ${
                     latestLog.plantHealth === 'excellent' ? 'text-green-400' :
@@ -362,7 +363,7 @@ export function GrowCycleDetailSection({
                     latestLog.plantHealth === 'poor' ? 'text-orange-400' :
                     'text-red-400'
                   }`}>
-                    {latestLog.plantHealth}
+                    {t(`plantHealth.${latestLog.plantHealth}`) !== `plantHealth.${latestLog.plantHealth}` ? t(`plantHealth.${latestLog.plantHealth}`) : latestLog.plantHealth}
                   </div>
                 </div>
               </div>
@@ -387,12 +388,12 @@ export function GrowCycleDetailSection({
                 {getPhotoDisplayUrl(selectedPhoto) ? (
                   <img
                     src={getPhotoDisplayUrl(selectedPhoto)}
-                    alt={selectedPhoto.caption || 'Photo'}
+                    alt={selectedPhoto.caption || t('operations.cycle.photoAlt')}
                     className="w-full h-auto max-h-[80vh] object-contain rounded-lg"
                     onClick={(e) => e.stopPropagation()}
                   />
                 ) : (
-                  <div className="text-white/60 text-center py-12">Photo unavailable</div>
+                  <div className="text-white/60 text-center py-12">{t('operations.cycle.photoUnavailable')}</div>
                 )}
 
                 {selectedPhoto.caption && (
@@ -410,24 +411,24 @@ export function GrowCycleDetailSection({
           {/* Daily Logs Feed */}
           <div className="flex-shrink-0">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg text-white">Daily Logs ({dailyLogs.length})</h3>
+              <h3 className="text-lg text-white">{t('operations.cycle.dailyLogs')} ({dailyLogs.length})</h3>
               {photos.length > 0 && (
                 <span className="text-xs text-white/40 flex items-center gap-1">
                   <ImageIcon className="w-3 h-3" />
-                  {photos.length} photos total
+                  {photos.length} {t('operations.cycle.photosTotal')}
                 </span>
               )}
             </div>
 
             {dailyLogs.length === 0 ? (
               <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-12 text-center">
-                <div className="text-white/60 mb-4">No logs yet</div>
+                <div className="text-white/60 mb-4">{t('operations.cycle.noLogsYet')}</div>
                 <button
                   onClick={handleOpenAddLog}
                   className="inline-flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-lg px-4 py-2 text-sm text-white transition-all"
                 >
                   <Plus className="w-4 h-4" />
-                  Add First Log
+                  {t('operations.cycle.addFirstLog')}
                 </button>
               </div>
             ) : (
@@ -443,21 +444,21 @@ export function GrowCycleDetailSection({
                           {formatDate(log.timestamp)}
                         </div>
                         <div className="text-sm text-white/60">
-                          {formatRelativeTime(log.timestamp)} • Day {getDaysSince(cycle.seedDate) - getDaysSince(log.timestamp) + getDaysSince(cycle.seedDate)}
+                          {formatRelativeTime(log.timestamp)} • {t('common.day')} {getDaysSince(cycle.seedDate) - getDaysSince(log.timestamp) + getDaysSince(cycle.seedDate)}
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => handleOpenEditLog(log)}
                           className="p-2 text-white/40 hover:text-white transition-colors"
-                          title="Edit log"
+                          title={t('operations.cycle.editLog')}
                         >
                           <Pencil className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setLogToDelete(log)}
                           className="p-2 text-white/40 hover:text-red-400 transition-colors"
-                          title="Delete log"
+                          title={t('operations.cycle.deleteLog')}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -468,7 +469,7 @@ export function GrowCycleDetailSection({
                         log.plantHealth === 'poor' ? 'bg-orange-500/20 text-orange-400 border border-orange-500/30' :
                         'bg-red-500/20 text-red-400 border border-red-500/30'
                       }`}>
-                        {log.plantHealth}
+                        {t(`plantHealth.${log.plantHealth}`) !== `plantHealth.${log.plantHealth}` ? t(`plantHealth.${log.plantHealth}`) : log.plantHealth}
                         </div>
                       </div>
                     </div>
@@ -481,37 +482,37 @@ export function GrowCycleDetailSection({
                     <div className="grid grid-cols-3 sm:grid-cols-6 gap-3 mb-4">
                       {log.environment.temperature && (
                         <div className="text-xs">
-                          <div className="text-white/40 mb-1">Temp</div>
+                          <div className="text-white/40 mb-1">{t('operations.cycle.temp')}</div>
                           <div className="text-white">{log.environment.temperature}°C</div>
                         </div>
                       )}
                       {log.environment.humidity && (
                         <div className="text-xs">
-                          <div className="text-white/40 mb-1">Humidity</div>
+                          <div className="text-white/40 mb-1">{t('operations.cycle.humidity')}</div>
                           <div className="text-white">{log.environment.humidity}%</div>
                         </div>
                       )}
                       {log.environment.ph && (
                         <div className="text-xs">
-                          <div className="text-white/40 mb-1">pH</div>
+                          <div className="text-white/40 mb-1">{t('operations.cycle.ph')}</div>
                           <div className="text-white">{log.environment.ph}</div>
                         </div>
                       )}
                       {log.environment.ec && (
                         <div className="text-xs">
-                          <div className="text-white/40 mb-1">EC</div>
+                          <div className="text-white/40 mb-1">{t('operations.cycle.ec')}</div>
                           <div className="text-white">{log.environment.ec}</div>
                         </div>
                       )}
                       {log.environment.waterTemp && (
                         <div className="text-xs">
-                          <div className="text-white/40 mb-1">Water T</div>
+                          <div className="text-white/40 mb-1">{t('operations.cycle.waterT')}</div>
                           <div className="text-white">{log.environment.waterTemp}°C</div>
                         </div>
                       )}
                       {log.environment.lightLevel && (
                         <div className="text-xs">
-                          <div className="text-white/40 mb-1">Light</div>
+                          <div className="text-white/40 mb-1">{t('operations.cycle.light')}</div>
                           <div className="text-white">{log.environment.lightLevel}</div>
                         </div>
                       )}
@@ -520,7 +521,7 @@ export function GrowCycleDetailSection({
                     {/* Tasks */}
                     {log.tasksPerformed.length > 0 && (
                       <div className="mb-4">
-                        <div className="text-xs text-white/40 mb-2">Tasks Performed</div>
+                        <div className="text-xs text-white/40 mb-2">{t('operations.cycle.tasksPerformed')}</div>
                         <div className="space-y-1">
                           {log.tasksPerformed.map((task, i) => (
                             <div key={i} className="text-sm text-white/70">
@@ -534,7 +535,7 @@ export function GrowCycleDetailSection({
                     {/* Issues */}
                     {log.issues.length > 0 && (
                       <div>
-                        <div className="text-xs text-white/40 mb-2">Issues</div>
+                        <div className="text-xs text-white/40 mb-2">{t('operations.cycle.issues')}</div>
                         <div className="space-y-2">
                           {log.issues.map((issue, i) => (
                             <div key={i} className={`text-sm p-2 rounded-lg ${
@@ -542,10 +543,10 @@ export function GrowCycleDetailSection({
                               issue.severity === 'medium' ? 'bg-yellow-500/10 text-yellow-300' :
                               'bg-white/5 text-white/70'
                             }`}>
-                              <span className="uppercase text-xs mr-2">{issue.severity}</span>
+                              <span className="uppercase text-xs mr-2">{t(`severity.${issue.severity}`) !== `severity.${issue.severity}` ? t(`severity.${issue.severity}`) : issue.severity}</span>
                               {issue.description}
                               {issue.resolved && (
-                                <span className="text-green-400 ml-2">✓ Resolved</span>
+                                <span className="text-green-400 ml-2">{t('operations.cycle.resolved')}</span>
                               )}
                             </div>
                           ))}
@@ -561,7 +562,7 @@ export function GrowCycleDetailSection({
                         <div className={`${log.issues.length > 0 || log.tasksPerformed.length > 0 ? 'mt-4 pt-4 border-t border-white/10' : ''}`}>
                           <div className="text-xs text-white/40 mb-2 flex items-center gap-1">
                             <ImageIcon className="w-3 h-3" />
-                            {logPhotos.length} photo{logPhotos.length > 1 ? 's' : ''}
+                            {logPhotos.length} {logPhotos.length > 1 ? t('operations.cycle.photos') : t('operations.cycle.photo')}
                           </div>
                           <div className="flex gap-2 flex-wrap">
                             {logPhotos.map((photo) => (
@@ -573,12 +574,12 @@ export function GrowCycleDetailSection({
                                 {getPhotoDisplayUrl(photo) ? (
                                   <img
                                     src={getPhotoDisplayUrl(photo)}
-                                    alt={photo.caption || 'Log photo'}
+                                    alt={photo.caption || t('operations.cycle.logPhotoAlt')}
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
                                   <div className="w-full h-full flex items-center justify-center bg-white/5 text-white/30 text-xs">
-                                    No preview
+                                    {t('operations.cycle.noPreview')}
                                   </div>
                                 )}
                                 <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
@@ -629,9 +630,14 @@ export function GrowCycleDetailSection({
 
       <ConfirmDialog
         isOpen={confirmDeleteCycle}
-        title="Delete grow cycle?"
-        description={`This will permanently delete "${cycle?.name}" and all ${dailyLogs.length} daily log${dailyLogs.length === 1 ? '' : 's'} and ${photos.length} photo${photos.length === 1 ? '' : 's'} associated with it. This cannot be undone.`}
-        confirmLabel="Delete cycle"
+        title={t('operations.cycle.deleteCycleTitle')}
+        description={t('operations.cycle.deleteCycleBody', {
+          name: cycle?.name ?? '',
+          logs: dailyLogs.length,
+          photos: photos.length,
+        })}
+        confirmLabel={t('operations.cycle.deleteCycleConfirm')}
+        cancelLabel={t('common.cancel')}
         destructive
         loading={deleting}
         onConfirm={handleDeleteCycle}
@@ -640,9 +646,12 @@ export function GrowCycleDetailSection({
 
       <ConfirmDialog
         isOpen={Boolean(logToDelete)}
-        title="Delete daily log?"
-        description={`Permanently delete the log from ${logToDelete ? formatDate(logToDelete.timestamp) : ''}? Any photos attached to this log will also be removed.`}
-        confirmLabel="Delete log"
+        title={t('operations.cycle.deleteLogTitle')}
+        description={t('operations.cycle.deleteLogBody', {
+          date: logToDelete ? formatDate(logToDelete.timestamp) : '',
+        })}
+        confirmLabel={t('operations.cycle.deleteLogConfirm')}
+        cancelLabel={t('common.cancel')}
         destructive
         loading={deleting}
         onConfirm={handleDeleteLog}

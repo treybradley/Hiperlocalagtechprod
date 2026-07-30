@@ -1,4 +1,5 @@
 import { AlertTriangle } from 'lucide-react';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface ConfirmDialogProps {
   isOpen: boolean;
@@ -16,14 +17,18 @@ export function ConfirmDialog({
   isOpen,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel,
+  cancelLabel,
   destructive = false,
   loading = false,
   onConfirm,
   onCancel,
 }: ConfirmDialogProps) {
+  const { t } = useLanguage();
   if (!isOpen) return null;
+
+  const resolvedConfirmLabel = confirmLabel ?? t('common.confirm');
+  const resolvedCancelLabel = cancelLabel ?? t('common.cancel');
 
   return (
     <div className="fixed inset-0 z-[300] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
@@ -46,7 +51,7 @@ export function ConfirmDialog({
             disabled={loading}
             className="px-4 py-2 text-sm text-white/60 hover:text-white transition-colors disabled:opacity-50"
           >
-            {cancelLabel}
+            {resolvedCancelLabel}
           </button>
           <button
             onClick={onConfirm}
@@ -57,7 +62,7 @@ export function ConfirmDialog({
                 : 'bg-green-500/20 hover:bg-green-500/30 border-green-500/40 text-white'
             }`}
           >
-            {loading ? 'Please wait...' : confirmLabel}
+            {loading ? t('common.pleaseWait') : resolvedConfirmLabel}
           </button>
         </div>
       </div>

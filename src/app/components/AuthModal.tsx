@@ -1,11 +1,13 @@
 import { useState } from 'react';
 import { Leaf, Mail, Loader, Check, X } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLanguage } from '../contexts/LanguageContext';
 
 type Step = 'email' | 'email-sent';
 
 export function AuthModal() {
   const { showAuthModal, closeAuthModal, signInWithEmail } = useAuth();
+  const { t } = useLanguage();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -29,7 +31,7 @@ export function AuthModal() {
       await signInWithEmail(email.trim());
       setStep('email-sent');
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to send link');
+      setError(err instanceof Error ? err.message : t('auth.failedToSend'));
     } finally {
       setLoading(false);
     }
@@ -41,7 +43,7 @@ export function AuthModal() {
         <button
           onClick={handleClose}
           className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors"
-          aria-label="Close"
+          aria-label={t('common.close')}
         >
           <X className="w-4 h-4" />
         </button>
@@ -52,19 +54,19 @@ export function AuthModal() {
           </div>
           <div>
             <div className="text-white font-light text-lg tracking-tight">Hiperlocal</div>
-            <div className="text-white/30 text-[9px] uppercase tracking-widest">Sign in to continue</div>
+            <div className="text-white/30 text-[9px] uppercase tracking-widest">{t('auth.signInToContinue')}</div>
           </div>
         </div>
 
         {step === 'email' && (
           <form onSubmit={handleEmailSubmit} className="space-y-4">
-            <h2 className="text-white text-xl font-thin">Continue with email</h2>
-            <p className="text-white/40 text-sm">We&apos;ll send a magic link — no password needed.</p>
+            <h2 className="text-white text-xl font-thin">{t('auth.continueWithEmail')}</h2>
+            <p className="text-white/40 text-sm">{t('auth.magicLinkHint')}</p>
             <input
               type="email"
               value={email}
               onChange={e => setEmail(e.target.value)}
-              placeholder="you@example.com"
+              placeholder={t('auth.emailPlaceholder')}
               autoFocus
               required
               className="w-full bg-white/5 border border-white/15 rounded-xl px-4 py-3 text-white placeholder-white/25 focus:outline-none focus:border-green-500/50 text-sm"
@@ -75,7 +77,7 @@ export function AuthModal() {
               disabled={loading || !email.trim()}
               className="w-full flex items-center justify-center gap-2 py-3 bg-green-500/20 border border-green-500/40 text-green-400 rounded-xl hover:bg-green-500/30 disabled:opacity-40 transition-all text-sm"
             >
-              {loading ? <Loader className="w-4 h-4 animate-spin" /> : <><Mail className="w-4 h-4" /> Send magic link</>}
+              {loading ? <Loader className="w-4 h-4 animate-spin" /> : <><Mail className="w-4 h-4" /> {t('auth.sendMagicLink')}</>}
             </button>
           </form>
         )}
@@ -85,15 +87,15 @@ export function AuthModal() {
             <div className="w-14 h-14 rounded-full bg-green-500/20 border border-green-500/30 flex items-center justify-center mx-auto">
               <Check className="w-6 h-6 text-green-400" />
             </div>
-            <h2 className="text-white text-xl font-thin">Check your inbox</h2>
+            <h2 className="text-white text-xl font-thin">{t('auth.checkInbox')}</h2>
             <p className="text-white/50 text-sm">
-              We sent a magic link to <span className="text-white">{email}</span>. Click it to sign in — it expires in 1 hour.
+              {t('auth.sentLinkTo')} <span className="text-white">{email}</span>. {t('auth.clickToSignIn')}
             </p>
             <button
               onClick={() => { setStep('email'); setError(''); }}
               className="text-white/30 text-xs hover:text-white/60"
             >
-              Resend or use a different email
+              {t('auth.resendOrDifferent')}
             </button>
           </div>
         )}

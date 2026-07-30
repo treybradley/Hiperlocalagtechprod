@@ -12,6 +12,7 @@ import {
 } from '../../../../storage/utils/dateHelpers';
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from '../../ui/select';
 import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER } from '../opsFormClasses';
+import { useLanguage } from '../../../contexts/LanguageContext';
 
 interface CreateGrowCycleModalProps {
   isOpen: boolean;
@@ -44,6 +45,7 @@ export function CreateGrowCycleModal({
   onClose,
   onSuccess,
 }: CreateGrowCycleModalProps) {
+  const { t } = useLanguage();
   const [name, setName] = useState('');
   const [cropType, setCropType] = useState('');
   const [seedDate, setSeedDate] = useState(todayLocalDateInputValue());
@@ -115,7 +117,7 @@ export function CreateGrowCycleModal({
       onClose();
     } catch (error) {
       console.error('Failed to create grow cycle:', error);
-      alert('Failed to create grow cycle. Please try again.');
+      alert(t('operations.createCycle.failed'));
     } finally {
       setSaving(false);
     }
@@ -140,8 +142,8 @@ export function CreateGrowCycleModal({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/10">
           <div>
-            <h2 className="text-2xl text-white">Start New Grow Cycle</h2>
-            <p className="text-sm text-white/60 mt-1">Begin tracking a new crop cycle</p>
+            <h2 className="text-2xl text-white">{t('operations.createCycle.title')}</h2>
+            <p className="text-sm text-white/60 mt-1">{t('operations.createCycle.subtitle')}</p>
           </div>
           <button
             onClick={handleClose}
@@ -154,44 +156,44 @@ export function CreateGrowCycleModal({
         {/* Content */}
         <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-4">
           <div>
-            <label className="block text-sm text-white/70 mb-2">Cycle Name *</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cycleName')}</label>
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="e.g., Spring 2026 Basil Cycle"
+              placeholder={t('operations.createCycle.cycleNamePh')}
               className={OPS_FORM_INPUT}
             />
           </div>
 
           <div>
-            <label className="block text-sm text-white/70 mb-2">Crop Type *</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cropType')}</label>
             <Select value={cropType || undefined} onValueChange={handleCropSelect}>
               <SelectTrigger className={OPS_SELECT_TRIGGER}>
-                <SelectValue placeholder="Select a crop..." />
+                <SelectValue placeholder={t('operations.createCycle.selectCrop')} />
               </SelectTrigger>
               <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
                 <SelectGroup>
-                  <SelectLabel className="text-white/40">Herbs</SelectLabel>
+                  <SelectLabel className="text-white/40">{t('operations.createCycle.herbs')}</SelectLabel>
                   {CROP_OPTIONS.filter(c => c.value.includes('basil') || c.value.includes('cilantro') || c.value.includes('mint') || c.value.includes('parsley')).map(crop => (
                     <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
-                      {crop.label} (~{crop.growthDays} days)
+                      {crop.label} (~{crop.growthDays} {t('common.days')})
                     </SelectItem>
                   ))}
                 </SelectGroup>
                 <SelectGroup>
-                  <SelectLabel className="text-white/40">Leafy Greens</SelectLabel>
+                  <SelectLabel className="text-white/40">{t('operations.createCycle.leafyGreens')}</SelectLabel>
                   {CROP_OPTIONS.filter(c => c.value.includes('lettuce') || c.value.includes('arugula') || c.value.includes('kale') || c.value.includes('spinach') || c.value.includes('chard')).map(crop => (
                     <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
-                      {crop.label} (~{crop.growthDays} days)
+                      {crop.label} (~{crop.growthDays} {t('common.days')})
                     </SelectItem>
                   ))}
                 </SelectGroup>
                 <SelectGroup>
-                  <SelectLabel className="text-white/40">Microgreens</SelectLabel>
+                  <SelectLabel className="text-white/40">{t('operations.createCycle.microgreens')}</SelectLabel>
                   {CROP_OPTIONS.filter(c => c.value.includes('microgreens')).map(crop => (
                     <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
-                      {crop.label} (~{crop.growthDays} days)
+                      {crop.label} (~{crop.growthDays} {t('common.days')})
                     </SelectItem>
                   ))}
                 </SelectGroup>
@@ -201,7 +203,7 @@ export function CreateGrowCycleModal({
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/70 mb-2">Seed Date *</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.seedDate')}</label>
               <input
                 type="date"
                 value={seedDate}
@@ -210,7 +212,7 @@ export function CreateGrowCycleModal({
               />
             </div>
             <div>
-              <label className="block text-sm text-white/70 mb-2">Target Harvest Date</label>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.targetHarvest')}</label>
               <input
                 type="date"
                 value={targetHarvestDate}
@@ -221,21 +223,21 @@ export function CreateGrowCycleModal({
           </div>
 
           <div>
-            <label className="block text-sm text-white/70 mb-2">Initial Plant Count *</label>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.initialPlantCount')}</label>
             <input
               type="number"
               value={initialPlantCount}
               onChange={(e) => setInitialPlantCount(e.target.value)}
-              placeholder="e.g., 40"
+              placeholder={t('operations.createCycle.plantCountPh')}
               className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none focus:border-green-500/50"
             />
           </div>
 
           {cropType && targetHarvestDate && (
             <div className="bg-green-500/10 border border-green-500/30 rounded-xl p-4">
-              <div className="text-sm text-white/70 mb-1">Estimated Cycle Duration</div>
+              <div className="text-sm text-white/70 mb-1">{t('operations.createCycle.estimatedDuration')}</div>
               <div className="text-lg text-green-400">
-                {daysBetweenLocalDateStrings(seedDate, targetHarvestDate)} days
+                {daysBetweenLocalDateStrings(seedDate, targetHarvestDate)} {t('common.days')}
               </div>
             </div>
           )}
@@ -247,7 +249,7 @@ export function CreateGrowCycleModal({
             onClick={handleClose}
             className="text-white/60 hover:text-white transition-colors"
           >
-            Cancel
+            {t('common.cancel')}
           </button>
 
           <button
@@ -257,7 +259,7 @@ export function CreateGrowCycleModal({
               !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
             }`}
           >
-            {saving ? 'Creating...' : 'Start Cycle'}
+            {saving ? t('operations.createCycle.creating') : t('operations.createCycle.start')}
           </button>
         </div>
       </div>

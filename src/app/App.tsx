@@ -57,20 +57,32 @@ function AppContent() {
   // Restore mode preference (operations requires auth)
   useEffect(() => {
     if (authLoading) return;
-    const savedMode = localStorage.getItem('hydroops-mode') as 'planning' | 'operations' | null;
-    if (savedMode === 'planning') setMode('planning');
-    else if (savedMode === 'operations' && session) setMode('operations');
+    const savedMode = localStorage.getItem('hydroops-mode') as
+      | 'planning'
+      | 'operations'
+      | 'about'
+      | 'learn'
+      | null;
+    if (savedMode === 'operations') {
+      if (session) setMode('operations');
+      else setMode('planning');
+      return;
+    }
+    if (savedMode === 'planning' || savedMode === 'about' || savedMode === 'learn') {
+      setMode(savedMode);
+    }
   }, [authLoading, session]);
 
   const handleModeChange = (newMode: 'planning' | 'operations' | 'about' | 'learn') => {
     if (newMode === 'operations' && !session) {
-      openAuthModal(() => setMode('operations'));
+      openAuthModal(() => {
+        setMode('operations');
+        localStorage.setItem('hydroops-mode', 'operations');
+      });
       return;
     }
     setMode(newMode);
-    if (newMode === 'planning' || newMode === 'operations') {
-      localStorage.setItem('hydroops-mode', newMode);
-    }
+    localStorage.setItem('hydroops-mode', newMode);
   };
 
   const handleNextSlide = () => {
