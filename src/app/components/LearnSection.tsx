@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Leaf, TrendingUp, Clock, Droplets, Zap, Beaker, BookOpen } from 'lucide-react';
+import { TrendingUp, Droplets, Zap, Beaker, BookOpen, Thermometer, Sprout } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 
 type Tab = 'crops' | 'systems' | 'fundamentals';
@@ -40,8 +40,8 @@ const fundDefs = [
   { id: 'Water' as const, icon: Droplets },
   { id: 'Light' as const, icon: Zap },
   { id: 'Nutrients' as const, icon: TrendingUp },
-  { id: 'Temp' as const, icon: Leaf },
-  { id: 'GermHarvest' as const, icon: Clock },
+  { id: 'Temp' as const, icon: Thermometer },
+  { id: 'GermHarvest' as const, icon: Sprout },
 ];
 
 const categoryColors: Record<string, string> = {

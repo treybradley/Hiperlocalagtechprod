@@ -268,10 +268,10 @@ export function GrowCycleDetailSection({
                   return (
                     <div key={stage} className="flex flex-col items-center flex-1">
                       <div
-                        className={`w-10 h-10 rounded-full border-2 flex items-center justify-center mb-3 transition-all ${
+                        className={`relative z-10 w-10 h-10 rounded-full border-2 flex items-center justify-center mb-3 transition-all ${
                           isCompleted || isCurrent
-                            ? 'bg-green-500/20 border-green-500'
-                            : 'bg-white/5 border-white/20'
+                            ? 'bg-[#0a0a0a] border-green-500'
+                            : 'bg-[#0a0a0a] border-white/20'
                         }`}
                       >
                         {isCompleted ? (
