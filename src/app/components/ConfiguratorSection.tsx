@@ -1,8 +1,8 @@
-import { Slider } from './ui/slider';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ImageWithFallback } from './figma/ImageWithFallback';
-import { Plus, X } from 'lucide-react';
+import { Plus, X, Box } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
+import { SectionLabel } from './SectionLabel';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
 import { CROPS, CROP_CATEGORY_STYLES, SYSTEM_TYPES, SYSTEM_TYPE_LABELS, type SystemType } from '../data/crops';
 
@@ -32,7 +32,7 @@ function SmallNumberInput({ value, onChange, min = 1, step = 1 }: {
 
 export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
   const { t } = useLanguage();
-  const { config, updateConfig, addSystemBlock, removeSystemBlock, updateSystemBlock, toggleCropInBlock, updateCropInBlock } = useFarmConfig();
+  const { config, addSystemBlock, removeSystemBlock, updateSystemBlock, toggleCropInBlock, updateCropInBlock } = useFarmConfig();
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
@@ -46,11 +46,12 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
       </div>
 
       <div className={`relative h-full max-w-7xl mx-auto px-4 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex flex-col gap-4 h-full overflow-y-auto hiper-scroll pb-24 pt-24 px-1">
+        <div className="flex flex-col gap-4 h-full overflow-y-auto hiper-scroll pb-24 pt-32 px-1">
+          <SectionLabel icon={Box} label={t('nav.configurator')} />
 
           {/* Header */}
           <div className="flex-shrink-0">
-            <h2 className="text-white font-thin tracking-tight text-[32px] pt-[72px]">
+            <h2 className="text-white font-thin tracking-tight text-[32px]">
               {t('configurator.subtitle')}
               <br />
               <span className="text-white/40">{t('configurator.subtitle2')}</span>
@@ -206,58 +207,6 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
                 </div>
               );
             })}
-          </div>
-
-          {/* Other settings */}
-          <div className="bg-white/5 border border-white/10 rounded-2xl p-5 space-y-5">
-            <span className="text-xs text-white/40 uppercase tracking-wider">Environment & Automation</span>
-
-            <div className="space-y-2">
-              <label className="text-xs text-white/60 uppercase tracking-wider">{t('configurator.environment')}</label>
-              <Select value={config.environment} onValueChange={v => updateConfig({ environment: v as 'open-air' | 'climate-controlled' })}>
-                <SelectTrigger className="bg-white/5 border-white/20 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  className="bg-[#141414] border-white/15 text-white"
-                  collisionPadding={{ bottom: 96, top: 16 }}
-                >
-                  <SelectItem value="open-air">{t('configurator.openAir')}</SelectItem>
-                  <SelectItem value="climate-controlled">{t('configurator.climateControlled')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between items-center">
-                <label className="text-xs text-white/60 uppercase tracking-wider">{t('configurator.lighting')}</label>
-                <span className="text-white text-sm">{config.lighting}%</span>
-              </div>
-              <Slider
-                value={[config.lighting]}
-                onValueChange={v => updateConfig({ lighting: v[0] })}
-                min={25} max={100} step={5}
-                className="py-2"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs text-white/60 uppercase tracking-wider">{t('configurator.automation')}</label>
-              <Select value={config.automation} onValueChange={v => updateConfig({ automation: v as 'manual' | 'semi-auto' | 'full-auto' })}>
-                <SelectTrigger className="bg-white/5 border-white/20 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent
-                  side="top"
-                  className="bg-[#141414] border-white/15 text-white"
-                  collisionPadding={{ bottom: 96, top: 16 }}
-                >
-                  <SelectItem value="manual">{t('configurator.manual')}</SelectItem>
-                  <SelectItem value="semi-auto">{t('configurator.semiAuto')}</SelectItem>
-                  <SelectItem value="full-auto">{t('configurator.fullAuto')}</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
         </div>

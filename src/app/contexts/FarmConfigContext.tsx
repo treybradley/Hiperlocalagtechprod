@@ -2,8 +2,6 @@ import { createContext, useContext, useState, useEffect, ReactNode } from 'react
 import { CROPS, type SystemType } from '../data/crops';
 
 export type { SystemType };
-type Environment = 'open-air' | 'climate-controlled';
-type AutomationLevel = 'manual' | 'semi-auto' | 'full-auto';
 
 export interface CropAllocation {
   cropId: string;
@@ -46,9 +44,6 @@ function uid() {
 export interface FarmConfig {
   systemBlocks: SystemBlock[];
   cropParams: Record<string, CropParams>;
-  environment: Environment;
-  lighting: number;
-  automation: AutomationLevel;
 }
 
 interface FarmConfigContextType {
@@ -59,7 +54,6 @@ interface FarmConfigContextType {
   toggleCropInBlock: (blockId: string, cropId: string) => void;
   updateCropInBlock: (blockId: string, cropId: string, patch: Partial<Pick<CropAllocation, 'plantsPerUnit' | 'unitCount'>>) => void;
   updateCropParam: (cropId: string, param: Partial<CropParams>) => void;
-  updateConfig: (partial: Partial<Omit<FarmConfig, 'systemBlocks' | 'cropParams'>>) => void;
   replaceConfig: (config: FarmConfig) => void;
 }
 
@@ -101,9 +95,6 @@ function buildDefaultConfig(): FarmConfig {
   return {
     systemBlocks: DEFAULT_BLOCKS,
     cropParams: defaultCropParams(),
-    environment: 'climate-controlled',
-    lighting: 75,
-    automation: 'semi-auto',
   };
 }
 
@@ -180,10 +171,6 @@ export function FarmConfigProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const updateConfig = (partial: Partial<Omit<FarmConfig, 'systemBlocks' | 'cropParams'>>) => {
-    setConfig(prev => ({ ...prev, ...partial }));
-  };
-
   const replaceConfig = (next: FarmConfig) => {
     setConfig(next);
   };
@@ -191,7 +178,7 @@ export function FarmConfigProvider({ children }: { children: ReactNode }) {
   return (
     <FarmConfigContext.Provider value={{
       config, addSystemBlock, removeSystemBlock, updateSystemBlock,
-      toggleCropInBlock, updateCropInBlock, updateCropParam, updateConfig, replaceConfig,
+      toggleCropInBlock, updateCropInBlock, updateCropParam, replaceConfig,
     }}>
       {children}
     </FarmConfigContext.Provider>

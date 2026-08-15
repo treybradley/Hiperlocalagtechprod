@@ -303,15 +303,6 @@ export function FinancialPlanDetailSection({
                       {describeSystemBlock(block)}
                     </div>
                   ))}
-                  <div className="pt-2 space-y-1 text-xs text-white/40">
-                    <div>{t('operations.planDetail.environment')} {config.environment.replace('-', ' ')}</div>
-                    <div>
-                      {t('operations.planDetail.lightingAutomation', {
-                        lighting: config.lighting,
-                        automation: config.automation,
-                      })}
-                    </div>
-                  </div>
                 </div>
               )}
               <p className="text-xs text-white/30 mt-4">

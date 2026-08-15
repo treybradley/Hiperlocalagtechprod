@@ -79,6 +79,7 @@ export function GrowCycleDetailSection({
     if (currentIndex === -1 || currentIndex >= STAGE_ORDER.length - 1) return;
 
     const nextStage = STAGE_ORDER[currentIndex + 1];
+    if (!nextStage || nextStage === 'germination') return;
 
     try {
       await advanceCycleStage(cycleId, nextStage);

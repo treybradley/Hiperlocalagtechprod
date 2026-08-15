@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import {
   DollarSign, Package, Leaf, ChevronDown, ChevronUp, Save, Check, Loader,
-  Pencil, Plus,
+  Pencil, Plus, BarChart3,
 } from 'lucide-react';
 import { useFarmConfig, getTotalPlantsByCrop } from '../contexts/FarmConfigContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -21,6 +21,7 @@ import {
   normalizeFinancialInputs,
 } from '../utils/financialPlanHelpers';
 import { StartupCostsEditor } from './operations/StartupCostsEditor';
+import { SectionLabel } from './SectionLabel';
 
 export type PlanLoadRequest =
   | { type: 'load'; planId: string }
@@ -205,61 +206,35 @@ export function FinancialCalculatorSection({
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
-      <div className={`relative h-full max-w-7xl mx-auto px-4 pt-20 md:pt-24 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
+      <div className={`relative h-full max-w-7xl mx-auto px-4 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
 
-        {/* Mobile: sticky results bar */}
-        <div className="sm:hidden mb-4">
-          <button
-            onClick={() => setShowResults(v => !v)}
-            className="w-full flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-4 py-3 mt-20"
-          >
-            <div className="flex items-center gap-6">
-              <div>
-                <div className="text-xs text-white/40">{t('financialCalculator.monthly')}</div>
-                <div className={`text-lg ${profitColor}`}>${fmt(calc.monthlyProfit)}</div>
-              </div>
-              <div>
-                <div className="text-xs text-white/40">{t('common.roi')}</div>
-                <div className={`text-lg ${profitColor}`}>{fmt(calc.roi, 1)}%</div>
-              </div>
-              <div>
-                <div className="text-xs text-white/40">{t('financialCalculator.payback')}</div>
-                <div className="text-lg text-white">{calc.paybackMonths ? `${fmt(calc.paybackMonths, 0)}${t('common.mo')}` : '—'}</div>
-              </div>
-            </div>
-            {showResults ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
-          </button>
-          {showResults && (
-            <div className="mt-2 bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
-              <ResultsContent calc={calc} profitColor={profitColor} profitBg={profitBg} fmt={fmt} />
-            </div>
-          )}
-        </div>
-
-        <div className="flex flex-col sm:flex-row h-full gap-6 overflow-hidden">
+        <div className="flex flex-col lg:flex-row h-full min-h-0 gap-6 overflow-hidden">
 
           {/* LEFT: Inputs */}
-          <div className="flex-1 overflow-y-auto hiper-scroll space-y-4 pt-[81px] pb-24 px-1">
-            <div className="pb-2">
-              <h2 className="text-white font-thin tracking-tight text-3xl pt-3">
-                {t('financialCalculator.title')}
-                <span className="text-white/40 ml-3 text-xl">{t('financialCalculator.subtitle')}</span>
-              </h2>
-              <p className="text-white/40 text-xs mt-1">{t('financialCalculator.description')}</p>
-              {editingPlanId && (
-                <div className="flex items-center gap-2 mt-2">
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-xs text-green-400">
-                    <Pencil className="w-3 h-3" />
-                    {t('financialCalculator.editing')} {planName}
-                  </span>
-                  <button
-                    onClick={handleStartNewPlan}
-                    className="text-xs text-white/40 hover:text-white/70 transition-colors"
-                  >
-                    {t('financialCalculator.startFresh')}
-                  </button>
-                </div>
-              )}
+          <div className="flex-1 min-h-0 overflow-y-auto hiper-scroll space-y-4 pb-24 pt-32 px-1">
+            <div className="flex flex-col gap-4 md:gap-6">
+              <SectionLabel icon={BarChart3} label={t('nav.financial')} />
+              <div className="pb-2">
+                <h2 className="text-white font-thin tracking-tight text-3xl">
+                  {t('financialCalculator.title')}
+                  <span className="text-white/40 ml-3 text-xl">{t('financialCalculator.subtitle')}</span>
+                </h2>
+                <p className="text-white/40 text-xs mt-1">{t('financialCalculator.description')}</p>
+                {editingPlanId && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-green-500/15 border border-green-500/30 text-xs text-green-400">
+                      <Pencil className="w-3 h-3" />
+                      {t('financialCalculator.editing')} {planName}
+                    </span>
+                    <button
+                      onClick={handleStartNewPlan}
+                      className="text-xs text-white/40 hover:text-white/70 transition-colors"
+                    >
+                      {t('financialCalculator.startFresh')}
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {!session && (
@@ -269,8 +244,7 @@ export function FinancialCalculatorSection({
             )}
 
             {/* Costs — startup capital & monthly operating */}
-            <div className="bg-white/[0.02] border border-white/10 rounded-2xl p-4 sm:p-5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-start">
                 <div className="bg-amber-500/5 border border-amber-500/20 rounded-2xl p-5 h-full">
                   <div className="flex items-center gap-2 mb-4">
                     <Package className="w-4 h-4 text-amber-400" />
@@ -295,7 +269,6 @@ export function FinancialCalculatorSection({
                   <InputRow label={t('financialCalculator.labor')}        value={inputs.labor}        onChange={v => patchInputs({ labor: v })}         step={500} prefix="$" suffix={t('common.perMo')} />
                   <InputRow label={t('financialCalculator.otherMonthly')} value={inputs.otherMonthly} onChange={v => patchInputs({ otherMonthly: v })} step={100} prefix="$" suffix={t('common.perMo')} />
                 </div>
-              </div>
             </div>
 
             {/* System summary */}
@@ -418,6 +391,35 @@ export function FinancialCalculatorSection({
               </div>
             )}
 
+            {/* Results on mobile / tablet — above save */}
+            <div className="lg:hidden space-y-4 pt-2">
+              <button
+                onClick={() => setShowResults(v => !v)}
+                className="w-full flex items-center justify-between bg-white/5 border border-white/10 rounded-lg px-4 py-3"
+              >
+                <div className="flex items-center gap-6">
+                  <div>
+                    <div className="text-xs text-white/40">{t('financialCalculator.monthly')}</div>
+                    <div className={`text-lg ${profitColor}`}>${fmt(calc.monthlyProfit)}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/40">{t('common.roi')}</div>
+                    <div className={`text-lg ${profitColor}`}>{fmt(calc.roi, 1)}%</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-white/40">{t('financialCalculator.payback')}</div>
+                    <div className="text-lg text-white">{calc.paybackMonths ? `${fmt(calc.paybackMonths, 0)}${t('common.mo')}` : '—'}</div>
+                  </div>
+                </div>
+                {showResults ? <ChevronUp className="w-4 h-4 text-white/40" /> : <ChevronDown className="w-4 h-4 text-white/40" />}
+              </button>
+              {showResults && (
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-3">
+                  <ResultsContent calc={calc} profitColor={profitColor} profitBg={profitBg} fmt={fmt} />
+                </div>
+              )}
+            </div>
+
             {/* Save Plan */}
             <div className="flex flex-wrap items-center gap-3">
               {saveState === 'idle' && (
@@ -480,7 +482,7 @@ export function FinancialCalculatorSection({
           </div>
 
           {/* RIGHT: Results (desktop) */}
-          <div className="hidden sm:flex w-80 flex-col gap-4 overflow-y-auto hiper-scroll pt-6 pb-24 px-1">
+          <div className="hidden lg:flex w-80 flex-col gap-4 overflow-y-auto hiper-scroll pt-32 pb-24 px-1">
             <ResultsContent calc={calc} profitColor={profitColor} profitBg={profitBg} fmt={fmt} />
           </div>
 

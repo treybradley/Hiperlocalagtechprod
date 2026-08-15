@@ -474,8 +474,6 @@ export const appExtraEs = {
       harvestLoss: 'Pérdida en cosecha',
       updatedSaved: 'Actualizado {updated} · Guardado {saved}',
       noSystems: 'Sin sistemas configurados',
-      environment: 'Ambiente:',
-      lightingAutomation: 'Iluminación: {lighting}% · Automatización: {automation}',
       changeLayoutHint:
         'Para cambiar el diseño o los cultivos, usa el configurador del planificador y guarda de nuevo.',
       startupHint:
@@ -1210,8 +1208,6 @@ export const appExtraEn = {
       harvestLoss: 'Harvest loss',
       updatedSaved: 'Updated {updated} · Saved {saved}',
       noSystems: 'No systems configured',
-      environment: 'Environment:',
-      lightingAutomation: 'Lighting: {lighting}% · Automation: {automation}',
       changeLayoutHint:
         'To change system layout or crops, use the planner configurator and save again.',
       startupHint:
