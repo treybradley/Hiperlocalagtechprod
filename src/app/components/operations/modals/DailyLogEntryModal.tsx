@@ -1,18 +1,22 @@
 import { useEffect, useState } from 'react';
 import { X, Plus, Trash2, Image as ImageIcon, Upload } from 'lucide-react';
-import { createDailyLog, updateDailyLog } from '../../../../storage/operations/dailyLogs';
+import { createDailyLog, updateDailyLog, deleteDailyLog } from '../../../../storage/operations/dailyLogs';
+import { reconcileCycleStagesFromLogs } from '../../../../storage/operations/reconcileCycleStages';
 import {
   createPhoto,
   deletePhoto,
   getPhotoDisplayUrl,
   getPhotosByDailyLog,
 } from '../../../../storage/operations/photos';
-import { DailyLog, Photo } from '../../../../storage/models';
+import { DailyLog, Photo, StageObservation } from '../../../../storage/models';
+import { STAGE_ORDER } from '../../../../storage/utils/stageFromLogs';
+import { ConfirmDialog } from './ConfirmDialog';
 import { formatBytes } from '../../../../storage/utils/imageCompression';
 import {
   parseLocalDateString,
   toLocalDateInputValue,
   todayLocalDateInputValue,
+  formatDate,
 } from '../../../../storage/utils/dateHelpers';
 import { OPS_FORM_DATE, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER_SM } from '../opsFormClasses';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
@@ -23,6 +27,7 @@ interface DailyLogEntryModalProps {
   growCycleId: string;
   systemId: string;
   existingLog?: DailyLog | null;
+  effectiveStageLabel?: string;
   onClose: () => void;
   onSuccess: (log: DailyLog) => void;
 }
@@ -35,6 +40,7 @@ export function DailyLogEntryModal({
   growCycleId,
   systemId,
   existingLog,
+  effectiveStageLabel,
   onClose,
   onSuccess,
 }: DailyLogEntryModalProps) {
@@ -48,6 +54,7 @@ export function DailyLogEntryModal({
   const [waterTemp, setWaterTemp] = useState('');
   const [lightLevel, setLightLevel] = useState('');
   const [plantHealth, setPlantHealth] = useState<PlantHealth>('good');
+  const [stageObservation, setStageObservation] = useState<StageObservation>('unchanged');
   const [observations, setObservations] = useState('');
   const [visualChanges, setVisualChanges] = useState('');
   const [experimentNotes, setExperimentNotes] = useState('');
@@ -62,6 +69,8 @@ export function DailyLogEntryModal({
   const [removedExistingPhotoIds, setRemovedExistingPhotoIds] = useState<Set<string>>(new Set());
   const [loadingExistingPhotos, setLoadingExistingPhotos] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const visibleExistingPhotos = existingPhotos.filter((p) => !removedExistingPhotoIds.has(p.id));
   const totalPhotoCount = visibleExistingPhotos.length + photos.length;
@@ -77,6 +86,7 @@ export function DailyLogEntryModal({
       setWaterTemp(existingLog.environment.waterTemp?.toString() ?? '');
       setLightLevel(existingLog.environment.lightLevel?.toString() ?? '');
       setPlantHealth(existingLog.plantHealth);
+      setStageObservation(existingLog.stageObservation ?? 'unchanged');
       setObservations(existingLog.observations);
       setVisualChanges(existingLog.visualChanges ?? '');
       setExperimentNotes(existingLog.experimentNotes ?? '');
@@ -106,6 +116,7 @@ export function DailyLogEntryModal({
       setWaterTemp('');
       setLightLevel('');
       setPlantHealth('good');
+      setStageObservation('unchanged');
       setObservations('');
       setVisualChanges('');
       setExperimentNotes('');
@@ -206,6 +217,7 @@ export function DailyLogEntryModal({
           lightLevel: lightLevel ? parseFloat(lightLevel) : undefined,
         },
         plantHealth,
+        stageObservation,
         observations,
         visualChanges: visualChanges || undefined,
         tasksPerformed: tasks
@@ -239,6 +251,7 @@ export function DailyLogEntryModal({
         }
 
         await updateDailyLog(existingLog.id, { ...payload, photoIds });
+        await reconcileCycleStagesFromLogs(growCycleId);
         onSuccess({ ...existingLog, ...payload, photoIds });
       } else {
         const log = await createDailyLog({
@@ -268,6 +281,7 @@ export function DailyLogEntryModal({
           await updateDailyLog(log.id, { photoIds });
         }
 
+        await reconcileCycleStagesFromLogs(growCycleId);
         onSuccess({ ...log, photoIds });
       }
 
@@ -290,6 +304,7 @@ export function DailyLogEntryModal({
     setWaterTemp('');
     setLightLevel('');
     setPlantHealth('good');
+    setStageObservation('unchanged');
     setObservations('');
     setVisualChanges('');
     setExperimentNotes('');
@@ -307,7 +322,34 @@ export function DailyLogEntryModal({
     onClose();
   };
 
+  const handleDelete = async () => {
+    if (!existingLog) return;
+    setDeleting(true);
+    try {
+      await deleteDailyLog(existingLog.id);
+      await reconcileCycleStagesFromLogs(growCycleId);
+      setConfirmDelete(false);
+      resetForm();
+      onClose();
+      onSuccess(existingLog);
+    } catch (error) {
+      console.error('Failed to delete daily log:', error);
+      alert(t('operations.cycle.failedDeleteLog'));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const stageOptions: Array<{ value: StageObservation; label: string }> = [
+    { value: 'unchanged', label: t('operations.dailyLog.stageUnchanged') },
+    ...STAGE_ORDER.map((stage) => ({
+      value: stage as StageObservation,
+      label: t(`stages.${stage}`),
+    })),
+  ];
+
   return (
+    <>
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
       <div className="relative bg-[#0a0a0a] border border-white/20 rounded-3xl max-w-3xl w-full max-h-[90vh] overflow-hidden">
         {/* Header */}
@@ -414,12 +456,13 @@ export function DailyLogEntryModal({
           {/* Plant Health */}
           <div>
             <label className="block text-sm text-white/70 mb-2">{t('operations.dailyLog.plantHealth')}</label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 flex-wrap">
               {(['excellent', 'good', 'fair', 'poor', 'critical'] as PlantHealth[]).map((health) => (
                 <button
                   key={health}
+                  type="button"
                   onClick={() => setPlantHealth(health)}
-                  className={`flex-1 px-4 py-2 rounded-lg text-sm capitalize transition-all ${
+                  className={`flex-1 min-w-[80px] px-4 py-2 rounded-lg text-sm capitalize transition-all ${
                     plantHealth === health
                       ? health === 'excellent' ? 'bg-green-500/30 text-green-300 border-2 border-green-500' :
                         health === 'good' ? 'bg-green-500/20 text-green-300 border-2 border-green-500/70' :
@@ -430,6 +473,34 @@ export function DailyLogEntryModal({
                   }`}
                 >
                   {t(`plantHealth.${health}`)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Growth Stage */}
+          <div>
+            <label className="block text-sm text-white/70 mb-2">{t('operations.dailyLog.growthStage')} *</label>
+            {effectiveStageLabel && (
+              <p className="text-xs text-white/40 mb-2">
+                {t('operations.dailyLog.currentCycleStage')}: {effectiveStageLabel}
+              </p>
+            )}
+            <div className="flex gap-2 flex-wrap">
+              {stageOptions.map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setStageObservation(value)}
+                  className={`px-3 py-2 rounded-lg text-sm transition-all ${
+                    stageObservation === value
+                      ? value === 'unchanged'
+                        ? 'bg-white/15 text-white border-2 border-white/30'
+                        : 'bg-green-500/20 text-green-300 border-2 border-green-500/70'
+                      : 'bg-white/5 text-white/60 border-2 border-transparent hover:bg-white/10'
+                  }`}
+                >
+                  {label}
                 </button>
               ))}
             </div>
@@ -704,24 +775,65 @@ export function DailyLogEntryModal({
 
         {/* Footer */}
         <div className="flex items-center justify-between p-6 border-t border-white/10">
-          <button
-            onClick={handleClose}
-            className="text-xs text-white/60 hover:text-white transition-colors"
-          >
-            {t('common.cancel')}
-          </button>
+          <div>
+            {isEditing ? (
+              <button
+                type="button"
+                onClick={() => setConfirmDelete(true)}
+                className="flex items-center gap-2 text-xs text-red-400 hover:text-red-300 transition-colors"
+              >
+                <Trash2 className="w-4 h-4" />
+                {t('operations.cycle.deleteLog')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleClose}
+                className="text-xs text-white/60 hover:text-white transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+            )}
+          </div>
 
-          <button
-            onClick={handleSave}
-            disabled={!canSave || saving}
-            className={`flex items-center gap-2 text-xs text-white bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-[18px] py-3 transition-all ${
-              !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {saving ? t('operations.dailyLog.saving') : isEditing ? t('operations.dailyLog.saveChanges') : t('operations.dailyLog.saveLog')}
-          </button>
+          <div className="flex items-center gap-4">
+            {isEditing && (
+              <button
+                type="button"
+                onClick={handleClose}
+                className="text-xs text-white/60 hover:text-white transition-colors"
+              >
+                {t('common.cancel')}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={!canSave || saving}
+              className={`flex items-center gap-2 text-xs text-white bg-green-500/20 hover:bg-green-500/30 backdrop-blur-sm border border-green-500/40 hover:border-green-500/60 rounded-full px-[18px] py-3 transition-all ${
+                !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {saving ? t('operations.dailyLog.saving') : isEditing ? t('operations.dailyLog.saveChanges') : t('operations.dailyLog.saveLog')}
+            </button>
+          </div>
         </div>
       </div>
     </div>
+
+    <ConfirmDialog
+      isOpen={confirmDelete}
+      title={t('operations.cycle.deleteLogTitle')}
+      description={t('operations.cycle.deleteLogBody', {
+        date: existingLog ? formatDate(existingLog.timestamp) : '',
+      })}
+      confirmLabel={t('operations.cycle.deleteLogConfirm')}
+      cancelLabel={t('common.cancel')}
+      destructive
+      loading={deleting}
+      onConfirm={handleDelete}
+      onCancel={() => setConfirmDelete(false)}
+    />
+    </>
   );
 }

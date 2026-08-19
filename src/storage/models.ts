@@ -126,6 +126,15 @@ export interface GrowCycle {
   status: 'planning' | 'active' | 'completed' | 'failed';
 }
 
+export type GrowStage =
+  | 'germination'
+  | 'rootDevelopment'
+  | 'vegetativeGrowth'
+  | 'flowering'
+  | 'harvest';
+
+export type StageObservation = GrowStage | 'unchanged';
+
 export interface DailyLog {
   id: string;
   growCycleId: string;
@@ -144,6 +153,7 @@ export interface DailyLog {
   };
 
   // Observations
+  stageObservation: StageObservation;
   plantHealth: 'excellent' | 'good' | 'fair' | 'poor' | 'critical';
   observations: string;
   visualChanges?: string;

@@ -1,17 +1,22 @@
 import { useEffect, useState } from 'react';
-import { X } from 'lucide-react';
-import { updateGrowCycle } from '../../../../storage/operations/growCycles';
+import { X, Trash2 } from 'lucide-react';
+import { updateGrowCycle, deleteGrowCycle } from '../../../../storage/operations/growCycles';
 import { GrowCycle } from '../../../../storage/models';
 import { parseLocalDateString, toLocalDateInputValue } from '../../../../storage/utils/dateHelpers';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../ui/select';
 import { OPS_FORM_DATE, OPS_FORM_INPUT, OPS_SELECT_CONTENT, OPS_SELECT_ITEM, OPS_SELECT_TRIGGER } from '../opsFormClasses';
 import { useLanguage } from '../../../contexts/LanguageContext';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface EditGrowCycleModalProps {
   isOpen: boolean;
   cycle: GrowCycle | null;
+  derivedStageLabel: string;
+  logCount: number;
+  photoCount: number;
   onClose: () => void;
   onSuccess: () => void;
+  onDeleted?: () => void;
 }
 
 const CROP_OPTIONS = [
@@ -31,22 +36,17 @@ const CROP_OPTIONS = [
   { value: 'microgreens-pea', label: 'Pea Shoots' },
 ];
 
-const STAGE_OPTIONS: GrowCycle['currentStage'][] = [
-  'germination',
-  'rootDevelopment',
-  'vegetativeGrowth',
-  'flowering',
-  'harvest',
-  'completed',
-];
-
 const STATUS_OPTIONS: GrowCycle['status'][] = ['planning', 'active', 'completed', 'failed'];
 
 export function EditGrowCycleModal({
   isOpen,
   cycle,
+  derivedStageLabel,
+  logCount,
+  photoCount,
   onClose,
   onSuccess,
+  onDeleted,
 }: EditGrowCycleModalProps) {
   const { t } = useLanguage();
   const [name, setName] = useState('');
@@ -55,9 +55,10 @@ export function EditGrowCycleModal({
   const [harvestDate, setHarvestDate] = useState('');
   const [initialPlantCount, setInitialPlantCount] = useState('');
   const [currentPlantCount, setCurrentPlantCount] = useState('');
-  const [currentStage, setCurrentStage] = useState<GrowCycle['currentStage']>('germination');
   const [status, setStatus] = useState<GrowCycle['status']>('active');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (!cycle || !isOpen) return;
@@ -67,7 +68,6 @@ export function EditGrowCycleModal({
     setHarvestDate(cycle.harvestDate ? toLocalDateInputValue(cycle.harvestDate) : '');
     setInitialPlantCount(String(cycle.initialPlantCount));
     setCurrentPlantCount(String(cycle.currentPlantCount));
-    setCurrentStage(cycle.currentStage);
     setStatus(cycle.status);
   }, [cycle, isOpen]);
 
@@ -87,7 +87,6 @@ export function EditGrowCycleModal({
         harvestDate: harvestDate ? parseLocalDateString(harvestDate) : undefined,
         initialPlantCount: parseInt(initialPlantCount),
         currentPlantCount: parseInt(currentPlantCount),
-        currentStage,
         status,
       });
       onSuccess();
@@ -100,110 +99,115 @@ export function EditGrowCycleModal({
     }
   };
 
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      await deleteGrowCycle(cycle.id);
+      setConfirmDelete(false);
+      onClose();
+      onDeleted?.();
+    } catch (error) {
+      console.error('Failed to delete grow cycle:', error);
+      alert(t('operations.cycle.failedDeleteCycle'));
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
-      <div className="relative bg-[#0a0a0a] border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
-        <div className="flex items-center justify-between p-6 border-b border-white/10">
-          <div>
-            <h2 className="text-2xl text-white">{t('operations.editCycle.title')}</h2>
-            <p className="text-sm text-white/60 mt-1">{t('operations.editCycle.subtitle')}</p>
-          </div>
-          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
-            <X className="w-6 h-6" />
-          </button>
-        </div>
-
-        <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-180px)] space-y-4">
-          <div>
-            <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cycleName')}</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className={OPS_FORM_INPUT}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cropType')}</label>
-            <Select value={cropType || undefined} onValueChange={setCropType}>
-              <SelectTrigger className={OPS_SELECT_TRIGGER}>
-                <SelectValue placeholder={t('operations.createCycle.selectCrop')} />
-              </SelectTrigger>
-              <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
-                {CROP_OPTIONS.map((crop) => (
-                  <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
-                    {crop.label}
-                  </SelectItem>
-                ))}
-                {!CROP_OPTIONS.some((c) => c.value === cropType) && cropType && (
-                  <SelectItem value={cropType} className={OPS_SELECT_ITEM}>{cropType}</SelectItem>
-                )}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
+    <>
+      <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+        <div className="relative bg-[#0a0a0a] border border-white/20 rounded-3xl max-w-2xl w-full max-h-[90vh] overflow-hidden">
+          <div className="flex items-center justify-between p-6 border-b border-white/10">
             <div>
-              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.seedDate')}</label>
+              <h2 className="text-2xl text-white">{t('operations.editCycle.title')}</h2>
+              <p className="text-sm text-white/60 mt-1">{t('operations.editCycle.subtitle')}</p>
+            </div>
+            <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
+              <X className="w-6 h-6" />
+            </button>
+          </div>
+
+          <div className="p-6 overflow-y-auto hiper-scroll max-h-[calc(90vh-220px)] space-y-4">
+            <div>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cycleName')}</label>
               <input
-                type="date"
-                value={seedDate}
-                onChange={(e) => setSeedDate(e.target.value)}
-                className={OPS_FORM_DATE}
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className={OPS_FORM_INPUT}
               />
             </div>
-            <div>
-              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.harvestDate')}</label>
-              <input
-                type="date"
-                value={harvestDate}
-                onChange={(e) => setHarvestDate(e.target.value)}
-                className={OPS_FORM_DATE}
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.initialPlantCount')}</label>
-              <input
-                type="number"
-                value={initialPlantCount}
-                onChange={(e) => setInitialPlantCount(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.currentPlantCount')}</label>
-              <input
-                type="number"
-                value={currentPlantCount}
-                onChange={(e) => setCurrentPlantCount(e.target.value)}
-                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.currentStage')}</label>
-              <Select
-                value={currentStage}
-                onValueChange={v => setCurrentStage(v as GrowCycle['currentStage'])}
-              >
+              <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.cropType')}</label>
+              <Select value={cropType || undefined} onValueChange={setCropType}>
                 <SelectTrigger className={OPS_SELECT_TRIGGER}>
-                  <SelectValue />
+                  <SelectValue placeholder={t('operations.createCycle.selectCrop')} />
                 </SelectTrigger>
-                <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16} side="top">
-                  {STAGE_OPTIONS.map((stage) => (
-                    <SelectItem key={stage} value={stage} className={OPS_SELECT_ITEM}>
-                      {t(`stages.${stage}`)}
+                <SelectContent className={OPS_SELECT_CONTENT} collisionPadding={16}>
+                  {CROP_OPTIONS.map((crop) => (
+                    <SelectItem key={crop.value} value={crop.value} className={OPS_SELECT_ITEM}>
+                      {crop.label}
                     </SelectItem>
                   ))}
+                  {!CROP_OPTIONS.some((c) => c.value === cropType) && cropType && (
+                    <SelectItem value={cropType} className={OPS_SELECT_ITEM}>{cropType}</SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.seedDate')}</label>
+                <input
+                  type="date"
+                  value={seedDate}
+                  onChange={(e) => setSeedDate(e.target.value)}
+                  className={OPS_FORM_DATE}
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.harvestDate')}</label>
+                <input
+                  type="date"
+                  value={harvestDate}
+                  onChange={(e) => setHarvestDate(e.target.value)}
+                  className={OPS_FORM_DATE}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm text-white/70 mb-2">{t('operations.createCycle.initialPlantCount')}</label>
+                <input
+                  type="number"
+                  value={initialPlantCount}
+                  onChange={(e) => setInitialPlantCount(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
+                />
+              </div>
+              <div>
+                <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.currentPlantCount')}</label>
+                <input
+                  type="number"
+                  value={currentPlantCount}
+                  onChange={(e) => setCurrentPlantCount(e.target.value)}
+                  className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-green-500/50"
+                />
+              </div>
+            </div>
+
+            <div>
+              <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.currentStage')}</label>
+              <div className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-green-400">
+                {derivedStageLabel}
+              </div>
+              <p className="text-xs text-white/40 mt-2">{t('operations.editCycle.stageFromLogs')}</p>
+            </div>
+
             <div>
               <label className="block text-sm text-white/70 mb-2">{t('operations.editCycle.status')}</label>
               <Select
@@ -223,23 +227,49 @@ export function EditGrowCycleModal({
               </Select>
             </div>
           </div>
-        </div>
 
-        <div className="flex items-center justify-between p-6 border-t border-white/10">
-          <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
-            {t('common.cancel')}
-          </button>
-          <button
-            onClick={handleSave}
-            disabled={!canSave || saving}
-            className={`bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-full px-6 py-3 text-white transition-all ${
-              !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
-            }`}
-          >
-            {saving ? t('operations.editCycle.saving') : t('operations.editCycle.save')}
-          </button>
+          <div className="flex items-center justify-between p-6 border-t border-white/10">
+            <button
+              type="button"
+              onClick={() => setConfirmDelete(true)}
+              className="flex items-center gap-2 text-xs text-red-400 hover:text-red-300 transition-colors"
+            >
+              <Trash2 className="w-4 h-4" />
+              {t('operations.cycle.delete')}
+            </button>
+            <div className="flex items-center gap-4">
+              <button onClick={onClose} className="text-white/60 hover:text-white transition-colors">
+                {t('common.cancel')}
+              </button>
+              <button
+                onClick={handleSave}
+                disabled={!canSave || saving}
+                className={`bg-green-500/20 hover:bg-green-500/30 border border-green-500/40 rounded-full px-6 py-3 text-white transition-all ${
+                  !canSave || saving ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {saving ? t('operations.editCycle.saving') : t('operations.editCycle.save')}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ConfirmDialog
+        isOpen={confirmDelete}
+        title={t('operations.cycle.deleteCycleTitle')}
+        description={t('operations.cycle.deleteCycleBody', {
+          name: cycle.name,
+          logs: logCount,
+          photos: photoCount,
+        })}
+        confirmLabel={t('operations.cycle.deleteCycleConfirm')}
+        cancelLabel={t('common.cancel')}
+        destructive
+        loading={deleting}
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
+    </>
   );
 }

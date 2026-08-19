@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { X } from 'lucide-react';
 import { createGrowCycle } from '../../../../storage/operations/growCycles';
 import { createDailyLog } from '../../../../storage/operations/dailyLogs';
+import { reconcileCycleStagesFromLogs } from '../../../../storage/operations/reconcileCycleStages';
 import { GrowCycle } from '../../../../storage/models';
 import {
   addDays,
@@ -99,6 +100,7 @@ export function CreateGrowCycleModal({
         growCycleId: cycle.id,
         systemId,
         timestamp: seedTimestamp,
+        stageObservation: 'germination',
         environment: {},
         plantHealth: 'good',
         observations: 'Cycle started - seeds planted',
@@ -111,6 +113,8 @@ export function CreateGrowCycleModal({
         issues: [],
         photoIds: [],
       });
+
+      await reconcileCycleStagesFromLogs(cycle.id);
 
       onSuccess(cycle);
       resetForm();
