@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { CROPS, type SystemType } from '../data/crops';
+import { DEFAULT_ROOM, normalizeRoom, type RoomSpec } from '../utils/farmLayout';
 
 export type { SystemType };
 
@@ -44,6 +45,7 @@ function uid() {
 export interface FarmConfig {
   systemBlocks: SystemBlock[];
   cropParams: Record<string, CropParams>;
+  room: RoomSpec;
 }
 
 interface FarmConfigContextType {
@@ -54,6 +56,7 @@ interface FarmConfigContextType {
   toggleCropInBlock: (blockId: string, cropId: string) => void;
   updateCropInBlock: (blockId: string, cropId: string, patch: Partial<Pick<CropAllocation, 'plantsPerUnit' | 'unitCount'>>) => void;
   updateCropParam: (cropId: string, param: Partial<CropParams>) => void;
+  updateRoom: (room: RoomSpec) => void;
   replaceConfig: (config: FarmConfig) => void;
 }
 
@@ -81,11 +84,20 @@ const DEFAULT_BLOCKS: SystemBlock[] = [
 
 const DRAFT_STORAGE_KEY = 'hiperlocal-config-draft';
 
+function hydrateConfig(raw: FarmConfig): FarmConfig {
+  return {
+    ...raw,
+    cropParams: raw.cropParams ?? defaultCropParams(),
+    systemBlocks: raw.systemBlocks ?? DEFAULT_BLOCKS,
+    room: normalizeRoom(raw.room),
+  };
+}
+
 function loadDraft(): FarmConfig | null {
   try {
     const raw = localStorage.getItem(DRAFT_STORAGE_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as FarmConfig;
+    return hydrateConfig(JSON.parse(raw) as FarmConfig);
   } catch {
     return null;
   }
@@ -95,6 +107,7 @@ function buildDefaultConfig(): FarmConfig {
   return {
     systemBlocks: DEFAULT_BLOCKS,
     cropParams: defaultCropParams(),
+    room: { ...DEFAULT_ROOM },
   };
 }
 
@@ -172,13 +185,17 @@ export function FarmConfigProvider({ children }: { children: ReactNode }) {
   };
 
   const replaceConfig = (next: FarmConfig) => {
-    setConfig(next);
+    setConfig(hydrateConfig(next));
+  };
+
+  const updateRoom = (room: RoomSpec) => {
+    setConfig(prev => ({ ...prev, room: normalizeRoom(room) }));
   };
 
   return (
     <FarmConfigContext.Provider value={{
       config, addSystemBlock, removeSystemBlock, updateSystemBlock,
-      toggleCropInBlock, updateCropInBlock, updateCropParam, replaceConfig,
+      toggleCropInBlock, updateCropInBlock, updateCropParam, updateRoom, replaceConfig,
     }}>
       {children}
     </FarmConfigContext.Provider>

@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { Plus, X, Box } from 'lucide-react';
@@ -5,6 +6,7 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { SectionLabel } from './SectionLabel';
 import { useFarmConfig } from '../contexts/FarmConfigContext';
 import { CROPS, CROP_CATEGORY_STYLES, SYSTEM_TYPES, SYSTEM_TYPE_LABELS, type SystemType } from '../data/crops';
+import { FarmVisualizer, RoomControls, roomHasOverflow } from './FarmVisualizer';
 
 interface ConfiguratorSectionProps {
   isActive: boolean;
@@ -32,7 +34,25 @@ function SmallNumberInput({ value, onChange, min = 1, step = 1 }: {
 
 export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
   const { t } = useLanguage();
-  const { config, addSystemBlock, removeSystemBlock, updateSystemBlock, toggleCropInBlock, updateCropInBlock } = useFarmConfig();
+  const {
+    config, addSystemBlock, removeSystemBlock, updateSystemBlock,
+    toggleCropInBlock, updateCropInBlock, updateRoom,
+  } = useFarmConfig();
+  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(config.systemBlocks[0]?.id ?? null);
+  const overflow = roomHasOverflow(config.systemBlocks, config.room);
+
+  useEffect(() => {
+    if (selectedBlockId && !config.systemBlocks.some((b) => b.id === selectedBlockId)) {
+      setSelectedBlockId(config.systemBlocks[0]?.id ?? null);
+    }
+  }, [config.systemBlocks, selectedBlockId]);
+
+  const selectBlock = (id: string | null) => {
+    setSelectedBlockId(id);
+    if (id) {
+      document.getElementById(`system-block-${id}`)?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  };
 
   return (
     <div className="relative w-full h-full overflow-hidden bg-[#0a0a0a]">
@@ -49,7 +69,6 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
         <div className="flex flex-col gap-4 h-full overflow-y-auto hiper-scroll pb-24 pt-32 px-1">
           <SectionLabel icon={Box} label={t('nav.configurator')} />
 
-          {/* Header */}
           <div className="flex-shrink-0">
             <h2 className="text-white font-thin tracking-tight text-[32px]">
               {t('configurator.subtitle')}
@@ -61,6 +80,8 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
             </p>
           </div>
 
+          <div className="flex flex-col lg:flex-row gap-4">
+            <div className="flex-1 order-2 lg:order-1">
           {/* System Blocks */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -84,7 +105,14 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
               const unitWord    = isMicro ? 'tray' : 'unit';
 
               return (
-                <div key={block.id} className="bg-white/5 border border-white/10 rounded-2xl p-4 space-y-4">
+                <div
+                  key={block.id}
+                  id={`system-block-${block.id}`}
+                  onMouseEnter={() => setSelectedBlockId(block.id)}
+                  className={`bg-white/5 border rounded-2xl p-4 space-y-4 transition-colors ${
+                    selectedBlockId === block.id ? 'border-cyan-400/50 bg-cyan-500/5' : 'border-white/10'
+                  }`}
+                >
 
                   {/* Block header row: system type selector + derived stats */}
                   <div className="flex items-start gap-3 flex-wrap">
@@ -207,6 +235,21 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
                 </div>
               );
             })}
+            </div>
+            </div>
+
+            <div className="order-1 lg:order-2 flex flex-col gap-2 w-full lg:w-1/2 shrink-0">
+              <RoomControls room={config.room} onChange={updateRoom} overflow={overflow} />
+              <div className="relative h-[70vh] max-h-[640px]">
+                <FarmVisualizer
+                  isActive={isActive}
+                  systemBlocks={config.systemBlocks}
+                  room={config.room}
+                  selectedBlockId={selectedBlockId}
+                  onSelectBlock={selectBlock}
+                />
+              </div>
+            </div>
           </div>
 
         </div>
