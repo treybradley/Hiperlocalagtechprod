@@ -147,10 +147,16 @@ export const appExtraEs = {
     pillar4Desc:
       'Cada gramo cosechado, cada peso gastado, cada ciclo registrado. Datos operativos reales para decisiones financieras reales.',
     storyTitle: 'Historia hasta ahora',
-    timeline2024: 'Concepto y primer prototipo construido en La Veleta, Tulum',
-    timeline2025: 'Primer socio restaurantero. 3 sistemas en operación.',
-    timeline2026: 'Plataforma Hiperlocal lanzada. Abierta a todos los cultivadores.',
-    timeline2027: 'Integración de hardware ESP32. Monitoreo en tiempo real.',
+    timeline2019:
+      'Trabajando en el lab de fabricación de New Inc — experimentando con impresión 3D, electrónica y circuitos (Arduino, Raspberry Pi) y sensores de computación física.',
+    timeline2020:
+      'En el COVID, con más tiempo libre, uní mi pasión por hacer y por la naturaleza en algo útil: construí mis primeros sistemas hidropónicos DIY y exploré aeroponía con recipientes encontrados y piezas compradas (tubería, mini bombas). La idea era que la agricultura vertical se viera bella y escultórica para uso doméstico.',
+    timeline2021:
+      'Seguí experimentando a pequeña escala — un hobby al que volvía cuando había tiempo.',
+    timeline2025:
+      'Al mudarme a Tulum, inspirado por mi pareja — que también ama la naturaleza y quería cultivar producto para restaurantes locales — retomé la idea con una plataforma digital para planear una operación real.',
+    timeline2026:
+      'Construí la plataforma. Ahora está abierta a pruebas e iteración de funciones.',
     audienceTitle: 'Hecho para cultivadores de todos los tamaños',
     homeLabel: 'Cultivadores caseros',
     homeDesc: 'Rastrea un solo sistema. Entiende tus costos y rendimientos reales.',
@@ -934,10 +940,16 @@ export const appExtraEn = {
     pillar4Desc:
       'Every gram harvested, every peso spent, every cycle logged. Real operational data driving real financial decisions.',
     storyTitle: 'Story so far',
-    timeline2024: 'Concept & first prototype system built in La Veleta, Tulum',
-    timeline2025: 'First restaurant partner. 3 systems operational.',
-    timeline2026: 'Hiperlocal platform launched. Open to all growers.',
-    timeline2027: 'ESP32 hardware integration. Real-time monitoring goes live.',
+    timeline2019:
+      'Working in the fabrication lab at New Inc — tinkering with 3D printing, electronics, and circuitry (Arduino, Raspberry Pi) plus physical computing sensors.',
+    timeline2020:
+      'Over COVID, with more spare time, I started marrying my love for making with my admiration for nature to explore creative utility: building my first DIY hydroponics systems, then exploring aeroponics with found vessels and bought parts (pipes, mini pumps). The idea was to make vertical farming look beautiful and sculptural for individual use at home.',
+    timeline2021:
+      'Kept experimenting at a small scale — a side hobby whenever I had time. But work always kept me occupied :/ so I had to put it on hold.',
+    timeline2025:
+      'Moving to Tulum and inspired by my girlfriend — who also loves nature and wanted to grow produce for local restaurants in Mexico — I re-enlivened the idea as a digital platform that could help her plan a real-live, scalable operation.',
+    timeline2026:
+      'Built the platform. Now open for testing and iterating on features.',
     audienceTitle: 'Built for growers of all sizes',
     homeLabel: 'Home growers',
     homeDesc: 'Track a single system. Understand your real costs and yields.',
@@ -946,7 +958,7 @@ export const appExtraEn = {
     commercialLabel: 'Commercial farms',
     commercialDesc: 'Manage multiple systems, cycles, and ROI across your entire operation.',
     comingTitle: "What's coming",
-    coming1: 'ESP32 hardware integration',
+    coming1: 'Hardware integration',
     coming2: 'Real-time sensor monitoring',
     coming3: 'Multi-farm accounts',
     coming4: 'Affiliate plant suppliers',

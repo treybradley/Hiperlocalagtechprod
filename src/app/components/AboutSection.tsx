@@ -30,10 +30,11 @@ export function AboutSection() {
   ], [t]);
 
   const timeline = useMemo(() => [
-    { year: '2024', event: t('about.timeline2024') },
+    { year: '2019', event: t('about.timeline2019') },
+    { year: '2020', event: t('about.timeline2020') },
+    { year: '2021–2024', event: t('about.timeline2021') },
     { year: '2025', event: t('about.timeline2025') },
     { year: '2026', event: t('about.timeline2026') },
-    { year: '2027', event: t('about.timeline2027') },
   ], [t]);
 
   const audience = useMemo(() => [
