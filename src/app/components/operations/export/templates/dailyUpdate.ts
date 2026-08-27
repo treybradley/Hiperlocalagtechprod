@@ -5,16 +5,19 @@ import {
   EXPORT_WIDTH,
   IG_SAFE,
   MONO_FONT,
-  SANS_FONT,
 } from '../exportFormat';
-import { drawGlassPanel, drawSolidBrandChip, measureBrandChip } from '../glassPanel';
+import { drawGlassPanel } from '../glassPanel';
 
 // Fixed chip padding at export resolution — NOT scaled with metricScale
 const CHIP_PAD_X = 28; // px at 1080 wide
 const CHIP_PAD_Y = 20;
 const OBS_PAD_X = 24;
 const OBS_PAD_Y = 16;
-const OBS_MAX_LINES = 3;
+const OBS_MAX_LINES = 5;
+/** Fixed metric grid: 3 columns × up to 2 rows for 6 stats. */
+const METRIC_COLUMNS = 3;
+/** Left share of bottom row when observations are shown (side-by-side layout). */
+const METRICS_PANEL_RATIO = 0.56;
 
 function primaryTextColor(fontMode: ExportRenderOptions['fontMode']): string {
   return fontMode === 'light' ? 'rgba(255, 255, 255, 0.95)' : 'rgba(12, 12, 12, 0.92)';
@@ -26,12 +29,26 @@ function secondaryTextColor(fontMode: ExportRenderOptions['fontMode']): string {
 
 function drawCoverImage(
   ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
+  image: CanvasImageSource,
   cw: number,
   ch: number,
 ) {
-  const iw = image.naturalWidth || image.width;
-  const ih = image.naturalHeight || image.height;
+  const iw =
+    'naturalWidth' in image && image.naturalWidth
+      ? image.naturalWidth
+      : 'videoWidth' in image
+        ? image.videoWidth
+        : 'width' in image
+          ? image.width
+          : cw;
+  const ih =
+    'naturalHeight' in image && image.naturalHeight
+      ? image.naturalHeight
+      : 'videoHeight' in image
+        ? image.videoHeight
+        : 'height' in image
+          ? image.height
+          : ch;
   const scale = Math.max(cw / iw, ch / ih);
   const dw = iw * scale;
   const dh = ih * scale;
@@ -155,25 +172,21 @@ function wrapTextLines(
 
 function measureObservationsBlock(
   ctx: CanvasRenderingContext2D,
-  label: string,
   text: string,
   contentW: number,
   chipFont: number,
-): { height: number; lines: string[]; labelFont: number; bodyFont: number; lineGap: number } {
-  const labelFont = Math.round(chipFont * 0.65);
+): { height: number; lines: string[]; bodyFont: number; lineGap: number } {
   const bodyFont = Math.round(chipFont * 0.82);
   const lineGap = Math.round(bodyFont * 0.28);
-  const labelGap = Math.round(labelFont * 0.45);
   const innerW = contentW - OBS_PAD_X * 2;
 
-  ctx.font = `500 ${bodyFont}px ${SANS_FONT}`;
+  ctx.font = `500 ${bodyFont}px ${MONO_FONT}`;
   const lines = wrapTextLines(ctx, text, innerW, OBS_MAX_LINES);
   const bodyH = lines.length * bodyFont + Math.max(0, lines.length - 1) * lineGap;
 
   return {
-    height: OBS_PAD_Y * 2 + labelFont + labelGap + bodyH,
+    height: OBS_PAD_Y * 2 + bodyH,
     lines,
-    labelFont,
     bodyFont,
     lineGap,
   };
@@ -185,17 +198,14 @@ function drawObservationsBlock(
   y: number,
   w: number,
   h: number,
-  label: string,
   lines: string[],
   options: ExportRenderOptions,
-  labelFont: number,
   bodyFont: number,
   lineGap: number,
   chipFont: number,
 ) {
   const { fontMode, glass } = options;
   const radius = Math.round(chipFont * 0.45);
-  const labelGap = Math.round(labelFont * 0.45);
 
   drawGlassPanel(ctx, x, y, w, h, fontMode, radius, glass);
 
@@ -204,12 +214,7 @@ function drawObservationsBlock(
 
   ctx.textAlign = 'left';
   ctx.textBaseline = 'top';
-  ctx.font = `600 ${labelFont}px ${MONO_FONT}`;
-  ctx.fillStyle = secondaryTextColor(fontMode);
-  ctx.fillText(label, textX, textY);
-  textY += labelFont + labelGap;
-
-  ctx.font = `500 ${bodyFont}px ${SANS_FONT}`;
+  ctx.font = `500 ${bodyFont}px ${MONO_FONT}`;
   ctx.fillStyle = primaryTextColor(fontMode);
   for (const line of lines) {
     ctx.fillText(line, textX, textY);
@@ -219,11 +224,20 @@ function drawObservationsBlock(
 
 export function drawDailyUpdateExport(
   ctx: CanvasRenderingContext2D,
-  image: HTMLImageElement,
+  image: CanvasImageSource,
   snapshot: ExportSnapshot,
   options: ExportRenderOptions,
 ) {
-  const { fontMode, enabledStatKeys, dayLabel, observationsLabel, metricScale, glass, showSafeGuides } = options;
+  const {
+    fontMode,
+    enabledStatKeys,
+    dayLabel,
+    metricScale,
+    glass,
+    headerOffsetY = 0,
+    skipBackground = false,
+    showSafeGuides,
+  } = options;
   const cw = EXPORT_WIDTH;
   const ch = EXPORT_HEIGHT;
   const side = cw * IG_SAFE.side;
@@ -232,53 +246,47 @@ export function drawDailyUpdateExport(
   const contentW = cw - side * 2;
   const cx = cw / 2;
 
-  ctx.clearRect(0, 0, cw, ch);
-  drawCoverImage(ctx, image, cw, ch);
+  if (!skipBackground) {
+    ctx.clearRect(0, 0, cw, ch);
+    drawCoverImage(ctx, image, cw, ch);
 
-  const vignette = ctx.createLinearGradient(0, ch * 0.3, 0, ch);
-  vignette.addColorStop(0, 'rgba(0,0,0,0)');
-  vignette.addColorStop(1, fontMode === 'light' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)');
-  ctx.fillStyle = vignette;
-  ctx.fillRect(0, 0, cw, ch);
+    const vignette = ctx.createLinearGradient(0, ch * 0.3, 0, ch);
+    vignette.addColorStop(0, 'rgba(0,0,0,0)');
+    vignette.addColorStop(1, fontMode === 'light' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.3)');
+    ctx.fillStyle = vignette;
+    ctx.fillRect(0, 0, cw, ch);
+  }
 
   const titleSize = Math.round(cw * 0.048);
   const subSize = Math.round(cw * 0.027);
-  const brandSize = Math.round(cw * 0.022);
   const panelRadius = Math.round(cw * 0.022);
   const panelPad = Math.round(cw * 0.04);
 
   // metricScale affects only the text size — not panel/chip padding
   const chipFont = Math.round(cw * BASE_CHIP_FONT_RATIO * metricScale);
 
-  const brandChip = measureBrandChip(ctx, 'Hiperlocal', brandSize);
-  const brandBlock = brandChip.h + Math.round(subSize * 0.5);
-
   // Measure all header text lines to size the panel to fit content
-  ctx.font = `600 ${titleSize}px ${SANS_FONT}`;
+  ctx.font = `600 ${titleSize}px ${MONO_FONT}`;
   const titleW = ctx.measureText(snapshot.crop).width;
   ctx.font = `500 ${subSize}px ${MONO_FONT}`;
   const sub1W = ctx.measureText(`${dayLabel} ${snapshot.dayNumber} · ${snapshot.dateLabel}`).width;
-  const sub2W = ctx.measureText(`${snapshot.stageLabel} · ${snapshot.plantHealthLabel}`).width;
-  const maxTextW = Math.max(brandChip.w, titleW, sub1W, sub2W);
+  const sub2W = ctx.measureText(snapshot.stageLabel).width;
+  const maxTextW = Math.max(titleW, sub1W, sub2W);
   const headerW = Math.min(contentW, maxTextW + panelPad * 2);
   const headerX = cx - headerW / 2;
-  const headerY = top;
-  const headerInnerTop = headerY + panelPad + brandBlock;
+  const headerY = top + headerOffsetY;
+  const headerInnerTop = headerY + panelPad;
   const headerH =
     panelPad * 2 +
-    brandBlock +
     titleSize +
     subSize * 2 +
     Math.round(subSize * 0.5);
 
   drawGlassPanel(ctx, headerX, headerY, headerW, headerH, fontMode, panelRadius, glass);
 
-  // Brand chip — drawn once, centered at top of the header panel (inside bounds)
-  drawSolidBrandChip(ctx, cx, headerY + panelPad, 'Hiperlocal', brandSize);
-
   ctx.textAlign = 'center';
   ctx.textBaseline = 'top';
-  ctx.font = `600 ${titleSize}px ${SANS_FONT}`;
+  ctx.font = `600 ${titleSize}px ${MONO_FONT}`;
   ctx.fillStyle = primaryTextColor(fontMode);
   ctx.fillText(snapshot.crop, cx, headerInnerTop);
 
@@ -290,77 +298,104 @@ export function drawDailyUpdateExport(
     headerInnerTop + titleSize + Math.round(subSize * 0.4),
   );
   ctx.fillText(
-    `${snapshot.stageLabel} · ${snapshot.plantHealthLabel}`,
+    snapshot.stageLabel,
     cx,
     headerInnerTop + titleSize + Math.round(subSize * 0.4) + subSize + Math.round(subSize * 0.22),
   );
 
-  // Bottom stack: observations (lowest), then stat chips above
-  let cursorY = ch - bottom;
+  // Bottom row: metrics grid (left) + observations (right), side-by-side
   const chipGap = Math.round(cw * 0.024);
+  const panelGap = chipGap;
+  const bottomY = ch - bottom;
 
-  if (snapshot.observations) {
+  const visibleStats = snapshot.stats.filter((s) => enabledStatKeys.has(s.key));
+  const hasObs = Boolean(snapshot.observations);
+  const hasStats = visibleStats.length > 0;
+
+  let metricsX = side;
+  let metricsW = contentW;
+  let obsX = side;
+  let obsW = contentW;
+
+  if (hasObs && hasStats) {
+    metricsW = Math.round(contentW * METRICS_PANEL_RATIO);
+    obsW = contentW - metricsW - panelGap;
+    obsX = side + metricsW + panelGap;
+  } else if (hasObs) {
+    obsX = side;
+    obsW = contentW;
+  }
+
+  // Measure metrics grid first (for side-by-side height alignment)
+  let gridHeight = 0;
+  let metricsLayout: {
+    rows: (typeof visibleStats)[];
+    rowHeights: number[];
+    chipW: number;
+  } | null = null;
+
+  if (hasStats) {
+    const chipsPerRow = METRIC_COLUMNS;
+    const chipW = (metricsW - (METRIC_COLUMNS - 1) * chipGap) / METRIC_COLUMNS;
+    const measurements = visibleStats.map((s) => measureStatChip(ctx, s.label, s.value, chipFont));
+    const chipHeights = measurements.map((m) => m.height);
+
+    const rows: (typeof visibleStats)[] = [];
+    const rowHeights: number[] = [];
+    for (let i = 0; i < visibleStats.length; i += chipsPerRow) {
+      const rowSlice = visibleStats.slice(i, i + chipsPerRow);
+      rows.push(rowSlice);
+      const h = Math.max(...rowSlice.map((_, j) => chipHeights[i + j]));
+      rowHeights.push(h);
+    }
+
+    gridHeight =
+      rowHeights.reduce((sum, h) => sum + h, 0) + Math.max(0, rows.length - 1) * chipGap;
+    metricsLayout = { rows, rowHeights, chipW };
+  }
+
+  // Observations — right column (or full width when no stats)
+  if (hasObs && snapshot.observations) {
     const obsBlock = measureObservationsBlock(
       ctx,
-      observationsLabel,
       snapshot.observations,
-      contentW,
+      obsW,
       chipFont,
     );
-    cursorY -= obsBlock.height;
+    const obsH = hasStats ? Math.max(obsBlock.height, gridHeight) : obsBlock.height;
+    const obsY = bottomY - obsH;
     drawObservationsBlock(
       ctx,
-      side,
-      cursorY,
-      contentW,
-      obsBlock.height,
-      observationsLabel,
+      obsX,
+      obsY,
+      obsW,
+      obsH,
       obsBlock.lines,
       options,
-      obsBlock.labelFont,
       obsBlock.bodyFont,
       obsBlock.lineGap,
       chipFont,
     );
-    cursorY -= chipGap;
   }
 
-  // Stat chips — hug content, shared min width, dynamic columns
-  const visibleStats = snapshot.stats.filter((s) => enabledStatKeys.has(s.key));
-
-  // Measure natural width/height for every chip; shared chip width = max natural width
-  const measurements = visibleStats.map((s) => measureStatChip(ctx, s.label, s.value, chipFont));
-  const maxNaturalW = Math.max(...(measurements.length ? measurements.map((m) => m.naturalWidth) : [0]));
-  const chipW = maxNaturalW; // chips hug the widest content; no cap needed for column count calc
-
-  // How many chips fit per row across contentW?
-  const chipsPerRow = Math.max(1, Math.floor((contentW + chipGap) / (chipW + chipGap)));
-  const chipHeights = measurements.map((m) => m.height);
-
-  const rows: (typeof visibleStats)[] = [];
-  const rowHeights: number[] = [];
-  for (let i = 0; i < visibleStats.length; i += chipsPerRow) {
-    const rowSlice = visibleStats.slice(i, i + chipsPerRow);
-    rows.push(rowSlice);
-    const h = Math.max(...rowSlice.map((_, j) => chipHeights[i + j]));
-    rowHeights.push(h);
+  if (!hasStats || !metricsLayout) {
+    if (showSafeGuides) drawSafeGuides(ctx, cw, ch);
+    return;
   }
 
-  // Rows centered in contentW, stacked bottom-up above observations
-  for (let ri = rows.length - 1; ri >= 0; ri--) {
+  const { rows, rowHeights, chipW } = metricsLayout;
+  let cursorY = bottomY - gridHeight;
+
+  for (let ri = 0; ri < rows.length; ri++) {
     const row = rows[ri];
     const rowH = rowHeights[ri];
-    cursorY -= rowH;
-
-    const rowW = row.length * chipW + (row.length - 1) * chipGap;
-    const rowX = side + (contentW - rowW) / 2;
 
     row.forEach((stat, ci) => {
-      const x = rowX + ci * (chipW + chipGap);
+      const x = metricsX + ci * (chipW + chipGap);
       drawStatChip(ctx, x, cursorY, chipW, rowH, stat.label, stat.value, options, chipFont);
     });
 
-    cursorY -= chipGap;
+    cursorY += rowH + chipGap;
   }
 
   if (showSafeGuides) {
@@ -369,7 +404,7 @@ export function drawDailyUpdateExport(
 }
 
 export async function renderDailyUpdateToBlob(
-  image: HTMLImageElement,
+  image: CanvasImageSource,
   snapshot: ExportSnapshot,
   options: ExportRenderOptions,
 ): Promise<Blob> {

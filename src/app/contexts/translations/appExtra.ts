@@ -1197,7 +1197,7 @@ export const appExtraEn = {
       humidity: 'Humidity',
       ph: 'pH',
       ec: 'EC',
-      waterT: 'Water T',
+      waterT: 'Water',
       plantHealth: 'Plant Health',
       light: 'Light',
       tasksPerformed: 'Tasks Performed',

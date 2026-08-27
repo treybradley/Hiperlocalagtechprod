@@ -28,6 +28,10 @@ export interface ExportRenderOptions {
   observationsLabel: string;
   metricScale: number;
   glass: GlassStyle;
+  /** Vertical offset for the top header panel in export pixels (positive = down). */
+  headerOffsetY?: number;
+  /** When true, only draw overlay chrome (header, stats, observations). */
+  skipBackground?: boolean;
   showSafeGuides?: boolean;
 }
 

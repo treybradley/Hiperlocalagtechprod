@@ -40,13 +40,14 @@ export const DEFAULT_STARTUP_ITEMS: StartupCostItem[] = [
   createStartupCostItem({ id: 'default-install', name: 'Installation & setup', category: 'installation', cost: 8000, quantity: 1 }),
 ];
 
+/** Small patio / hospitality op costs — sized so the default demo farm is profitable. */
 export const DEFAULT_FINANCIAL_INPUTS: FinancialInputs = {
   startupItems: DEFAULT_STARTUP_ITEMS.map(item => ({ ...item })),
-  electricity: 3200,
-  water: 400,
-  nutrients: 1800,
-  labor: 8000,
-  otherMonthly: 1000,
+  electricity: 1400,
+  water: 250,
+  nutrients: 900,
+  labor: 3200,
+  otherMonthly: 600,
 };
 
 export function computeStartupTotal(items: StartupCostItem[]): number {

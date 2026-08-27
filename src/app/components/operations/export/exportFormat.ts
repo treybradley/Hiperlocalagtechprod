@@ -15,5 +15,5 @@ export const EXPORT_ACCENT = '#34d399';
 /** Base metric chip font as fraction of canvas width (before metricScale). */
 export const BASE_CHIP_FONT_RATIO = 0.03;
 
-export const MONO_FONT = 'ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
+export const MONO_FONT = '"Roboto Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, monospace';
 export const SANS_FONT = 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';

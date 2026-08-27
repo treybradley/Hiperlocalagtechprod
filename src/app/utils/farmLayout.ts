@@ -10,8 +10,8 @@ export interface RoomSpec {
 }
 
 export const DEFAULT_ROOM: RoomSpec = {
-  width: 4,
-  depth: 6,
+  width: 5,
+  depth: 8,
   displayUnit: 'm',
 };
 

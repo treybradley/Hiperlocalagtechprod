@@ -67,22 +67,23 @@ const DEFAULT_BLOCKS: SystemBlock[] = [
     id: 'block-1',
     systemType: 'dwc',
     cropAllocations: [
-      { cropId: 'basil',          plantsPerUnit: 5, unitCount: 5 },
-      { cropId: 'mint',           plantsPerUnit: 3, unitCount: 2 },
-      { cropId: 'cilantro',       plantsPerUnit: 3, unitCount: 2 },
-      { cropId: 'edible-flowers', plantsPerUnit: 1, unitCount: 1 },
+      { cropId: 'basil',          plantsPerUnit: 8, unitCount: 8 },
+      { cropId: 'mint',           plantsPerUnit: 4, unitCount: 4 },
+      { cropId: 'cilantro',       plantsPerUnit: 4, unitCount: 4 },
+      { cropId: 'edible-flowers', plantsPerUnit: 2, unitCount: 3 },
     ],
   },
   {
     id: 'block-2',
     systemType: 'microgreens',
     cropAllocations: [
-      { cropId: 'microgreens', plantsPerUnit: 1, unitCount: 20 },
+      { cropId: 'microgreens', plantsPerUnit: 1, unitCount: 36 },
     ],
   },
 ];
 
-const DRAFT_STORAGE_KEY = 'hiperlocal-config-draft';
+/** v2 bumps reset stale drafts so signed-out demo defaults stay profitable. */
+const DRAFT_STORAGE_KEY = 'hiperlocal-config-draft-v2';
 
 function hydrateConfig(raw: FarmConfig): FarmConfig {
   return {

@@ -51,7 +51,9 @@ export function drawGlassPanel(
   roundRectPath(ctx, x, y, w, h, radius);
   ctx.clip();
   if (bctx) {
-    ctx.drawImage(blurCanvas, sx, sy, sw, sh, x, y, w, h);
+    // blurCanvas holds the padded sample starting at (0,0) — place it at (sx,sy)
+    // so the clip shows the correct frosted region (not a wrong source rect).
+    ctx.drawImage(blurCanvas, sx, sy);
   }
 
   const tint =

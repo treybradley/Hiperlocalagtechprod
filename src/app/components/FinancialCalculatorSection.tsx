@@ -27,7 +27,8 @@ export type PlanLoadRequest =
   | { type: 'load'; planId: string }
   | { type: 'new' };
 
-const FINANCIAL_DRAFT_KEY = 'hiperlocal-financial-draft';
+/** v2 bumps reset stale drafts so signed-out demo defaults stay profitable. */
+const FINANCIAL_DRAFT_KEY = 'hiperlocal-financial-draft-v2';
 
 function loadFinancialDraft(): FinancialInputs {
   try {
