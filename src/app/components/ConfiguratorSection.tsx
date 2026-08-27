@@ -66,7 +66,7 @@ export function ConfiguratorSection({ isActive }: ConfiguratorSectionProps) {
       </div>
 
       <div className={`relative h-full max-w-7xl mx-auto px-4 transition-all duration-1000 ${isActive ? 'opacity-100' : 'opacity-0'}`}>
-        <div className="flex flex-col gap-4 h-full overflow-y-auto hiper-scroll pb-24 pt-32 px-1">
+        <div className="flex flex-col gap-4 h-full overflow-y-auto pb-24 pt-32 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <SectionLabel icon={Box} label={t('nav.configurator')} />
 
           <div className="flex-shrink-0">

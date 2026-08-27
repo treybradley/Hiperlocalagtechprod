@@ -212,7 +212,7 @@ export function FinancialCalculatorSection({
         <div className="flex flex-col lg:flex-row h-full min-h-0 gap-6 overflow-hidden">
 
           {/* LEFT: Inputs */}
-          <div className="flex-1 min-h-0 overflow-y-auto hiper-scroll space-y-4 pb-24 pt-32 px-1">
+          <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pb-24 pt-32 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <div className="flex flex-col gap-4 md:gap-6">
               <SectionLabel icon={BarChart3} label={t('nav.financial')} />
               <div className="pb-2">
@@ -483,7 +483,7 @@ export function FinancialCalculatorSection({
           </div>
 
           {/* RIGHT: Results (desktop) */}
-          <div className="hidden lg:flex w-80 flex-col gap-4 overflow-y-auto hiper-scroll pt-32 pb-24 px-1">
+          <div className="hidden lg:flex w-80 flex-col gap-4 overflow-y-auto pt-32 pb-24 px-1 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
             <ResultsContent calc={calc} profitColor={profitColor} profitBg={profitBg} fmt={fmt} />
           </div>
 
