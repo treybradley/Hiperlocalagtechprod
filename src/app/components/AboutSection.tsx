@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Leaf, Droplets, Zap, TrendingUp, Users, Globe } from 'lucide-react';
 import { useLanguage } from '../contexts/LanguageContext';
 import { ImageWithFallback } from './figma/ImageWithFallback';
+import aboutMicrogreens from '../../assets/about-microgreens.jpg';
 
 export function AboutSection() {
   const { t } = useLanguage();
@@ -69,7 +70,7 @@ export function AboutSection() {
         {/* Hero image */}
         <div className="relative h-72 md:h-96 rounded-3xl overflow-hidden">
           <ImageWithFallback
-            src="https://images.unsplash.com/photo-1587049352846-4a222e784d38?w=1200"
+            src={aboutMicrogreens}
             alt={t('about.imageAlt')}
             className="w-full h-full object-cover"
           />
