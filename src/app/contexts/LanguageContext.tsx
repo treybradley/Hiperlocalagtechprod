@@ -12,7 +12,7 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(undefined);
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [language, setLanguage] = useState<Language>('es');
+  const [language, setLanguage] = useState<Language>('en');
 
   const t = (key: string, vars?: Record<string, string | number>): string => {
     const keys = key.split('.');
@@ -64,7 +64,7 @@ const translations = {
       stepTrackLabel: 'Registra ciclos y cosechas',
       stepOperate: 'Opera',
       stepOperateLabel: 'Administra sistemas guardados',
-      nextHint: 'Haz clic en Siguiente abajo para diseñar un sistema agTech',
+      nextHint: 'Haz clic en Siguiente abajo para diseñar tu primer sistema agTech',
       established: 'Est. 2025 — Tulum, Q.Roo',
     },
     configurator: {
@@ -510,7 +510,7 @@ const translations = {
       stepTrackLabel: 'Log grow cycles & harvests',
       stepOperate: 'Operate',
       stepOperateLabel: 'Manage saved systems',
-      nextHint: 'Click next below to design an agTech system',
+      nextHint: 'Click next below to design your first agTech system',
       established: 'Est. 2025 — Tulum, Q.Roo',
     },
     configurator: {
